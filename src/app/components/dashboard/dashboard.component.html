@@ -1,0 +1,383 @@
+<div class="dashboard-layout">
+  <!-- Top Navigation & System Status Bar -->
+  <header class="top-nav glass-card">
+    <div class="brand-group">
+      <div class="brand-icon">⚡</div>
+      <div>
+        <h1 class="brand-title">DBLTAS Web GUI</h1>
+        <p class="brand-sub">tecWatch Interactive Trace Analysis & Diagnostic Engine</p>
+      </div>
+    </div>
+
+    <!-- Live tecWatch Device Telemetry Widget -->
+    <div class="device-telemetry glass-card" *ngIf="tecWatchStatus">
+      <div class="telemetry-pill">
+        <span class="status-dot" [ngClass]="tecWatchStatus.status === 'OPERATIONAL' ? 'active' : 'error'"></span>
+        <span class="telemetry-label">Device:</span>
+        <span class="telemetry-val mono">{{ tecWatchStatus.device_id }}</span>
+      </div>
+      <div class="telemetry-pill">
+        <span class="telemetry-label">Battery:</span>
+        <span class="telemetry-val mono text-emerald">{{ tecWatchStatus.battery_level }}%</span>
+      </div>
+      <div class="telemetry-pill">
+        <span class="telemetry-label">Temp:</span>
+        <span class="telemetry-val mono text-amber">{{ tecWatchStatus.temperature }}°C</span>
+      </div>
+      <div class="telemetry-pill">
+        <span class="badge" [ngClass]="'badge-' + tecWatchStatus.status.toLowerCase()">
+          {{ tecWatchStatus.status }}
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Interactive Demo Scenario Bar -->
+  <div class="demo-bar glass-card">
+    <div class="demo-label">
+      <span class="demo-spark">✨</span>
+      <span><strong>Live Test Scenarios:</strong> Click to inject and verify trace failures:</span>
+    </div>
+    <div class="demo-actions">
+      <button id="btn-scenario-can" class="btn btn-outline" (click)="injectScenario('can_error')">
+        🚨 CAN Length Error (Msg 127)
+      </button>
+      <button id="btn-scenario-eth" class="btn btn-outline" (click)="injectScenario('ethernet_ok')">
+        ✅ Ethernet Clean Pass
+      </button>
+      <button id="btn-scenario-mod" class="btn btn-outline" (click)="injectScenario('modbus_error')">
+        ⚠️ Modbus Overflow Error
+      </button>
+      <button id="btn-reset-history" class="btn btn-outline btn-reset" (click)="resetHistory()">
+        🔄 Reset History
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="submitNotification" class="alert-banner">
+    {{ submitNotification }}
+  </div>
+
+  <!-- KPI Metrics Strip -->
+  <div class="metrics-grid">
+    <div class="metric-card glass-card">
+      <div class="metric-header">
+        <span class="metric-title">Total Analyses</span>
+        <span class="metric-icon">📊</span>
+      </div>
+      <div class="metric-val mono">{{ analyses.length }}</div>
+      <div class="metric-hint">Monitored capture sessions</div>
+    </div>
+
+    <div class="metric-card glass-card">
+      <div class="metric-header">
+        <span class="metric-title">Failed Sessions</span>
+        <span class="metric-icon">❌</span>
+      </div>
+      <div class="metric-val mono text-rose">
+        {{ (analyses | filterStatus:'FAILED').length }}
+      </div>
+      <div class="metric-hint text-rose">Requires engineer inspection</div>
+    </div>
+
+    <div class="metric-card glass-card">
+      <div class="metric-header">
+        <span class="metric-title">Passed Sessions</span>
+        <span class="metric-icon">✅</span>
+      </div>
+      <div class="metric-val mono text-emerald">
+        {{ (analyses | filterStatus:'PASSED').length }}
+      </div>
+      <div class="metric-hint text-emerald">Compliant communication</div>
+    </div>
+
+    <div class="metric-card glass-card">
+      <div class="metric-header">
+        <span class="metric-title">Active Target</span>
+        <span class="metric-icon">🌐</span>
+      </div>
+      <div class="metric-val mono text-cyan" style="font-size: 1.25rem;">http://localhost:8000</div>
+      <div class="metric-hint">Connected API Gateway</div>
+    </div>
+  </div>
+
+  <!-- Main Work Area: Left Master List / Right Detail Inspector -->
+  <div class="main-content-grid">
+    
+    <!-- LEFT PANEL: Filterable List of Analysis Runs -->
+    <aside class="sidebar-panel glass-card">
+      <div class="panel-header">
+        <h2>Trace Runs</h2>
+        <span class="badge badge-neutral mono">{{ sortedAnalyses.length }} runs</span>
+      </div>
+
+      <!-- Search & Filters -->
+      <div class="filter-controls">
+        <div class="input-wrapper">
+          <input
+            id="search-input"
+            type="text"
+            class="form-input search-input"
+            placeholder="Search run ID, protocol, summary..."
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="onFilterChange()"
+          />
+        </div>
+
+        <div class="filter-row">
+          <select id="status-filter" class="form-select" [(ngModel)]="selectedStatus" (change)="onFilterChange()">
+            <option value="ALL">All Statuses</option>
+            <option value="FAILED">FAILED only</option>
+            <option value="PASSED">PASSED only</option>
+          </select>
+
+          <select id="protocol-filter" class="form-select" [(ngModel)]="selectedProtocol" (change)="onFilterChange()">
+            <option value="ALL">All Protocols</option>
+            <option value="CAN">CAN Bus</option>
+            <option value="TCP">TCP / IP</option>
+            <option value="MODBUS">Modbus</option>
+          </select>
+        </div>
+
+        <div class="sort-row">
+          <span class="sort-label">Sort by:</span>
+          <button class="sort-btn" (click)="setSort('timestamp')" [class.active]="sortField === 'timestamp'">
+            Time {{ sortField === 'timestamp' ? (sortAsc ? '↑' : '↓') : '' }}
+          </button>
+          <button class="sort-btn" (click)="setSort('result_status')" [class.active]="sortField === 'result_status'">
+            Status {{ sortField === 'result_status' ? (sortAsc ? '↑' : '↓') : '' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Analysis List Items -->
+      <div class="analysis-list">
+        <div
+          *ngFor="let item of sortedAnalyses"
+          class="analysis-item"
+          [class.selected]="selectedAnalysis?.analysis_id === item.analysis_id"
+          [class.has-error]="item.result_status === 'FAILED'"
+          (click)="selectAnalysis(item)"
+          [attr.id]="'run-' + item.analysis_id"
+        >
+          <div class="item-top">
+            <span class="item-id mono">{{ item.analysis_id }}</span>
+            <span class="badge" [ngClass]="item.result_status === 'FAILED' ? 'badge-failed' : 'badge-passed'">
+              {{ item.result_status }}
+            </span>
+          </div>
+          <div class="item-summary">{{ item.summary }}</div>
+          <div class="item-meta mono">
+            <span>{{ item.device_id }}</span>
+            <span>{{ item.timestamp | date:'HH:mm:ss' }}</span>
+          </div>
+        </div>
+
+        <div *ngIf="sortedAnalyses.length === 0" class="empty-state">
+          <p>No trace runs match the current filters.</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT PANEL: Interactive Trace Inspector (Tabs: Trace-Data, Failure-Analysis, Data-Comparison) -->
+    <main class="inspector-panel glass-card" *ngIf="selectedAnalysis; else noSelection">
+      
+      <!-- Run Overview Banner -->
+      <div class="inspector-header">
+        <div>
+          <div class="header-badges">
+            <span class="badge badge-protocol mono">{{ selectedAnalysis.analysis_type }}</span>
+            <span class="badge" [ngClass]="selectedAnalysis.result_status === 'FAILED' ? 'badge-failed' : 'badge-passed'">
+              {{ selectedAnalysis.result_status }}
+            </span>
+          </div>
+          <h2 class="run-title mono">{{ selectedAnalysis.analysis_id }}</h2>
+          <p class="run-desc">{{ selectedAnalysis.summary }}</p>
+        </div>
+        <div class="header-meta mono text-right">
+          <div>Device: <strong>{{ selectedAnalysis.device_id }}</strong></div>
+          <div class="text-dim">{{ selectedAnalysis.timestamp | date:'yyyy-MM-dd HH:mm:ss' }}</div>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="inspector-tabs">
+        <button
+          id="tab-trace-data"
+          class="tab-btn"
+          [class.active]="activeTab === 'trace'"
+          (click)="activeTab = 'trace'"
+        >
+          📡 Trace-Data View ({{ selectedAnalysis.trace_messages.length }})
+        </button>
+
+        <button
+          id="tab-failure-analysis"
+          class="tab-btn"
+          [class.active]="activeTab === 'failures'"
+          (click)="activeTab = 'failures'"
+        >
+          🚨 Failure-Analysis View ({{ selectedAnalysis.failure_findings.length }})
+        </button>
+
+        <button
+          id="tab-data-comparison"
+          class="tab-btn"
+          [class.active]="activeTab === 'comparison'"
+          (click)="activeTab = 'comparison'"
+        >
+          ⚖️ Data-Comparison View ({{ selectedAnalysis.data_comparisons.length }})
+        </button>
+      </div>
+
+      <!-- TAB 1: Trace-Data Visualization -->
+      <div class="tab-content" *ngIf="activeTab === 'trace'">
+        <div class="section-title">
+          <h3>Communication Trace Messages</h3>
+          <p class="text-dim">Inspect raw message packets, protocol flows, and capture timestamps.</p>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Sender</th>
+                <th>Receiver</th>
+                <th>Protocol</th>
+                <th>Message Type</th>
+                <th>Status</th>
+                <th>Error Reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                *ngFor="let msg of selectedAnalysis.trace_messages"
+                [class.row-error]="msg.status === 'FAILED'"
+              >
+                <td class="mono text-dim">{{ msg.timestamp | date:'HH:mm:ss.SSS' }}</td>
+                <td class="mono font-semibold">{{ msg.sender }}</td>
+                <td class="mono">{{ msg.receiver }}</td>
+                <td>
+                  <span class="badge badge-protocol mono">{{ msg.protocol }}</span>
+                </td>
+                <td class="mono">{{ msg.message_type }}</td>
+                <td>
+                  <span class="badge" [ngClass]="msg.status === 'FAILED' ? 'badge-failed' : 'badge-passed'">
+                    {{ msg.status }}
+                  </span>
+                </td>
+                <td>
+                  <span *ngIf="msg.error_reason" class="error-highlight mono">
+                    ⚠ {{ msg.error_reason }}
+                  </span>
+                  <span *ngIf="!msg.error_reason" class="text-dim">—</span>
+                </td>
+              </tr>
+              <tr *ngIf="selectedAnalysis.trace_messages.length === 0">
+                <td colspan="7" class="text-center text-dim py-4">No trace packets logged in this session.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB 2: Failure-Analysis View -->
+      <div class="tab-content" *ngIf="activeTab === 'failures'">
+        <div class="section-title">
+          <h3>Identified Message Failures</h3>
+          <p class="text-dim">Detailed diagnostic findings with expected vs. actual packet lengths.</p>
+        </div>
+
+        <div class="failure-cards-grid" *ngIf="selectedAnalysis.failure_findings.length > 0">
+          <div *ngFor="let failure of selectedAnalysis.failure_findings" class="failure-card glass-card">
+            <div class="failure-card-header">
+              <span class="failure-id mono">Message {{ failure.message_id }}</span>
+              <span class="badge badge-failed mono">{{ failure.result }}</span>
+            </div>
+
+            <!-- Length Comparison Callout as specified in requirement -->
+            <div class="length-diff-box mono">
+              <div class="diff-row">
+                <span class="diff-label">Expected Length:</span>
+                <span class="diff-val expected">{{ failure.expected_length }} bytes</span>
+              </div>
+              <div class="diff-row">
+                <span class="diff-label">Actual Length:</span>
+                <span class="diff-val actual-error">{{ failure.actual_length }} bytes</span>
+              </div>
+              <div class="diff-result">
+                <span>Result:</span>
+                <strong class="text-rose">{{ failure.result }}</strong>
+              </div>
+            </div>
+
+            <div class="failure-explanation">
+              <p>
+                <strong>Diagnostic:</strong> Communication frame truncated or missing trailing padding bytes. 
+                Packet dropped according to protocol bounds enforcement.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="selectedAnalysis.failure_findings.length === 0" class="clean-pass-box glass-card">
+          <div class="clean-icon">🎉</div>
+          <h4>Zero Failures Detected</h4>
+          <p class="text-dim">All message packets matched expected framing and protocol lengths.</p>
+        </div>
+      </div>
+
+      <!-- TAB 3: Data-Structure Comparison View -->
+      <div class="tab-content" *ngIf="activeTab === 'comparison'">
+        <div class="section-title">
+          <h3>Data-Structure Comparison Table</h3>
+          <p class="text-dim">Field-by-field verification of expected vs. actual payload structures.</p>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table comparison-table">
+            <thead>
+              <tr>
+                <th>Field</th>
+                <th>Expected Value</th>
+                <th>Actual Value</th>
+                <th>Result</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                *ngFor="let row of selectedAnalysis.data_comparisons"
+                [class.row-error]="row.result !== 'OK'"
+              >
+                <td class="mono font-semibold">{{ row.field }}</td>
+                <td class="mono expected-cell">{{ row.expected }}</td>
+                <td class="mono" [ngClass]="row.result === 'OK' ? 'actual-ok' : 'actual-error-cell'">
+                  {{ row.actual }}
+                </td>
+                <td>
+                  <span class="badge" [ngClass]="row.result === 'OK' ? 'badge-ok' : 'badge-error'">
+                    {{ row.result }}
+                  </span>
+                </td>
+              </tr>
+              <tr *ngIf="selectedAnalysis.data_comparisons.length === 0">
+                <td colspan="4" class="text-center text-dim py-4">No data-structure comparisons recorded.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+
+    <ng-template #noSelection>
+      <div class="inspector-panel glass-card empty-inspector">
+        <div class="empty-icon">🔍</div>
+        <h3>Select an Analysis Run</h3>
+        <p class="text-dim">Choose a trace session from the left sidebar to inspect packet logs and failure comparisons.</p>
+      </div>
+    </ng-template>
+
+  </div>
+</div>

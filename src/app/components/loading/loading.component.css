@@ -1,0 +1,240 @@
+/* Top Streaming Progress Bar */
+.top-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 3px;
+  background: rgba(99, 102, 241, 0.2);
+  z-index: 10000;
+  overflow: hidden;
+}
+
+.progress-glow {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, #06b6d4, #6366f1, #a855f7, transparent);
+  animation: streamProgress 1.4s infinite cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 10px #06b6d4, 0 0 5px #6366f1;
+}
+
+/* Fullscreen Backdrop Overlay */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(9, 13, 22, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeInOverlay 0.25s ease-out forwards;
+}
+
+/* Modal Card */
+.loading-modal {
+  width: 90%;
+  max-width: 440px;
+  padding: 32px 28px;
+  background: rgba(17, 24, 39, 0.92);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(99, 102, 241, 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 20px;
+  animation: popInModal 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Radar & Pulse Spinner */
+.radar-container {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.radar-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  pointer-events: none;
+}
+
+.pulse-1 {
+  border-color: rgba(6, 182, 212, 0.5);
+  animation: radarPulse 2s infinite ease-out;
+}
+
+.pulse-2 {
+  border-color: rgba(99, 102, 241, 0.4);
+  animation: radarPulse 2s infinite 0.75s ease-out;
+}
+
+.spinner-core {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(6, 182, 212, 0.2));
+  border: 2px solid rgba(99, 102, 241, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: 0 0 16px rgba(99, 102, 241, 0.4);
+  animation: coreRotate 3s infinite linear;
+}
+
+.core-icon {
+  font-size: 1.5rem;
+  animation: iconPulse 1.2s infinite ease-in-out alternate;
+}
+
+/* Text Group */
+.loading-text-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.loading-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.loading-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
+/* Endpoint Badge */
+.endpoint-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  color: var(--accent-cyan);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.endpoint-text {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Linear Progress Track */
+.progress-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 40%;
+  background: linear-gradient(90deg, #6366f1, #06b6d4);
+  border-radius: 4px;
+  animation: progressShimmer 1.5s infinite ease-in-out;
+  box-shadow: 0 0 8px #06b6d4;
+}
+
+/* Animations */
+@keyframes streamProgress {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes fadeInOverlay {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes popInModal {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes radarPulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+@keyframes coreRotate {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes iconPulse {
+  0% {
+    transform: scale(0.9);
+  }
+
+  100% {
+    transform: scale(1.15);
+  }
+}
+
+@keyframes progressShimmer {
+  0% {
+    left: -40%;
+  }
+
+  50% {
+    left: 40%;
+    width: 50%;
+  }
+
+  100% {
+    left: 100%;
+    width: 20%;
+  }
+}

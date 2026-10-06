@@ -1,0 +1,36 @@
+<ng-container *ngIf="loadingService.isLoading$ | async">
+  <!-- Glowing Top Progress Bar -->
+  <div class="top-progress-bar">
+    <div class="progress-glow"></div>
+  </div>
+
+  <!-- Centered Glassmorphic Loading Overlay -->
+  <div class="loading-overlay">
+    <div class="loading-modal glass-card">
+      <!-- Animated Neon Radar Spinner -->
+      <div class="radar-container">
+        <div class="radar-ring pulse-1"></div>
+        <div class="radar-ring pulse-2"></div>
+        <div class="spinner-core">
+          <span class="core-icon">⚡</span>
+        </div>
+      </div>
+
+      <div class="loading-text-group">
+        <h3 class="loading-title">API Communication in Progress</h3>
+        <p class="loading-subtitle">Querying tecWatch Gateway & synchronizing trace buffers...</p>
+      </div>
+
+      <!-- Active Endpoint Badge -->
+      <div class="endpoint-indicator mono" *ngIf="loadingService.currentEndpoint$ | async as endpoint">
+        <span class="status-dot active"></span>
+        <span class="endpoint-text">{{ endpoint }}</span>
+      </div>
+
+      <!-- Linear Loading Track -->
+      <div class="progress-track">
+        <div class="progress-indicator"></div>
+      </div>
+    </div>
+  </div>
+</ng-container>
