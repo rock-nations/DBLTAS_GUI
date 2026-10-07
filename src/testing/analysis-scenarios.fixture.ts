@@ -1,4 +1,4 @@
-import { AnalysisScenarios, Scenario } from '../app/models/analysis-scenarios';
+import { AnalysisScenarios, IoGraph, Scenario } from '../app/models/analysis-scenarios';
 
 /** Test data shared by the specs of the analysis views. */
 export const TC1 = 'TC_NPRO.295.02283.01';
@@ -139,4 +139,34 @@ export const SAMPLE_ANALYSIS: AnalysisScenarios = {
       { id: 'Q1', question: "Is 'Meldung Kommando abgewiesen' (0x0006) expected? (S09)", scenario_ids: ['S09'] }
     ]
   }
+};
+
+/** 10 s of SCI-TDS traffic between ESTW-ZE and OC, starting 2026-10-02 12:24:00 (+02:00) = CANoe time 3.5 s. */
+export const SAMPLE_IO_GRAPH: IoGraph = {
+  capture_file: 'RealOCWorking_TDS_21026.pcapng',
+  start_epoch_s: 1790936640,
+  interval_s: 1,
+  utc_offset_min: 120,
+  canoe_zero_epoch_s: 1790936636.5,
+  total_packets: 74,
+  all_packets: [4, 6, 7, 6, 6, 7, 6, 20, 6, 6],
+  other_hosts: 0,
+  hosts: [
+    {
+      address: '1.208.188.16',
+      role: 'ESTW-ZE (CANoe)',
+      packets_sent: 38,
+      packets_received: 36,
+      sent: [2, 3, 4, 3, 3, 4, 3, 10, 3, 3],
+      received: [2, 3, 3, 3, 3, 3, 3, 10, 3, 3]
+    },
+    {
+      address: '10.129.15.2',
+      role: 'Object controller',
+      packets_sent: 36,
+      packets_received: 38,
+      sent: [2, 3, 3, 3, 3, 3, 3, 10, 3, 3],
+      received: [2, 3, 4, 3, 3, 4, 3, 10, 3, 3]
+    }
+  ]
 };

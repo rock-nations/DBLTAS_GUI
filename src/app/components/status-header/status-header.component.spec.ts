@@ -103,6 +103,21 @@ describe('StatusHeaderComponent', () => {
     expect('submitAnalysis' in TecWatchApiService.prototype).toBe(false);
   });
 
+  it('should mark the built-in status when tecWatch is not reachable', async () => {
+    await setup(() => of({ ...sampleStatus, source: 'simulated' }));
+
+    expect(compiled.querySelector('#status-simulated')?.textContent).toContain('Simulated');
+    expect(compiled.querySelector('.status-bar')?.textContent).toContain('tecWatch not reachable');
+    expect(compiled.querySelector('#status-error')).toBeNull();
+  });
+
+  it('should not mark a live tecWatch status', async () => {
+    await setup(() => of({ ...sampleStatus, source: 'tecwatch' }));
+
+    expect(compiled.querySelector('#status-simulated')).toBeNull();
+    expect(compiled.querySelector('.status-bar')?.textContent).toContain('as of');
+  });
+
   it('should show when the tecWatch status is unavailable', async () => {
     const badGateway: ApiError = {
       status: 502,

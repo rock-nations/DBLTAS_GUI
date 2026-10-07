@@ -32,8 +32,23 @@
     <div class="status-bar">
       <div class="status-item">
         <span class="status-label">tecWatch</span>
-        <span class="badge" [ngClass]="overallBadge(status.status)">{{ status.status }}</span>
-        <span class="status-sub mono">as of {{ status.timestamp | date:'HH:mm:ss' }}</span>
+        <span class="status-value">
+          <span class="badge" [ngClass]="overallBadge(status.status)">{{ status.status }}</span>
+          @if (status.source === 'simulated') {
+            <span
+              id="status-simulated"
+              class="badge badge-neutral"
+              title="The tecWatch server is not reachable, so the backend shows its built-in simulated status."
+            >
+              Simulated
+            </span>
+          }
+        </span>
+        @if (status.source === 'simulated') {
+          <span class="status-sub">tecWatch not reachable · built-in status</span>
+        } @else {
+          <span class="status-sub mono">as of {{ status.timestamp | date:'HH:mm:ss' }}</span>
+        }
       </div>
 
       <div class="status-item" [title]="status.link.local_endpoint + ' ⇄ ' + status.link.remote_endpoint">

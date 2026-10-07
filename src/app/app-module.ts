@@ -8,6 +8,7 @@ import { App } from './app';
 import { AnalysisViewComponent } from './components/analysis-view/analysis-view.component';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { FindingsComponent } from './components/findings/findings.component';
+import { IoGraphComponent } from './components/io-graph/io-graph.component';
 import { LoadingComponent } from './components/loading/loading.component';
 import { StatusHeaderComponent } from './components/status-header/status-header.component';
 import { UploadComponent } from './components/upload/upload.component';
@@ -20,6 +21,7 @@ import { loadingInterceptor } from './interceptors/loading.interceptor';
     AnalysisViewComponent,
     DashboardComponent,
     FindingsComponent,
+    IoGraphComponent,
     LoadingComponent,
     StatusHeaderComponent,
     UploadComponent,

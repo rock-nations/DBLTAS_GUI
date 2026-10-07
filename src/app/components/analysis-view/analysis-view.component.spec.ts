@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AppModule } from '../../app-module';
 import { AnalysisViewComponent } from './analysis-view.component';
 import { AnalysisScenarios } from '../../models/analysis-scenarios';
-import { SAMPLE_ANALYSIS, TC1, TC3 } from '../../../testing/analysis-scenarios.fixture';
+import { SAMPLE_ANALYSIS, SAMPLE_IO_GRAPH, TC1, TC3 } from '../../../testing/analysis-scenarios.fixture';
 
 describe('AnalysisViewComponent', () => {
   let component: AnalysisViewComponent;
@@ -157,6 +157,17 @@ describe('AnalysisViewComponent', () => {
     expect(component.chart?.ticks.map(t => t.value)).toEqual([0, 60, 120, 180, 240, 300]);
     expect((compiled.querySelector('details.state-details') as HTMLDetailsElement).open).toBe(false);
     expect(compiled.querySelectorAll('.state-details tbody tr.row-error').length).toBe(1);
+  });
+
+  it('should show the I/O graph of an uploaded capture', async () => {
+    const data = structuredClone(SAMPLE_ANALYSIS);
+    data.io_graph = structuredClone(SAMPLE_IO_GRAPH);
+    await setup(data);
+
+    click('#tab-traffic');
+    expect(component.activeTab).toBe('traffic');
+    expect(compiled.querySelector('app-io-graph #io-title')?.textContent).toContain('I/O Graph');
+    expect(compiled.querySelectorAll('app-io-graph polyline').length).toBe(3);
   });
 
   it('should summarize a trace without test report', async () => {

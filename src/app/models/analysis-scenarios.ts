@@ -89,6 +89,33 @@ export interface OpenQuestion {
   scenario_ids: string[];
 }
 
+/** Packets one IP address sent (ip.src) and received (ip.dst) per interval. */
+export interface IoGraphHost {
+  address: string;
+  role: string | null;
+  packets_sent: number;
+  packets_received: number;
+  sent: number[];
+  received: number[];
+}
+
+/** Packets per interval over an uploaded capture, like the Wireshark I/O graph. */
+export interface IoGraph {
+  capture_file: string;
+  /** Time of the first packet (Unix time, UTC). */
+  start_epoch_s: number;
+  interval_s: number;
+  /** UTC offset of the test bench from the test report; null if unknown. */
+  utc_offset_min: number | null;
+  /** Unix time of CANoe measurement time 0; null if the capture cannot be aligned. */
+  canoe_zero_epoch_s: number | null;
+  total_packets: number;
+  all_packets: number[];
+  /** Addresses with fewer packets that are not listed in hosts. */
+  other_hosts: number;
+  hosts: IoGraphHost[];
+}
+
 /**
  * Failure-analysis scenarios: returned by GET /api/analysis/scenarios (extracted from the analysis workbook)
  * and by POST /api/analysis/upload (analysis of an uploaded capture and/or CANoe test report).
@@ -109,4 +136,6 @@ export interface AnalysisScenarios {
     steps: MethodStep[];
     open_questions: OpenQuestion[];
   };
+  /** Only in upload results that include a capture. */
+  io_graph?: IoGraph | null;
 }
