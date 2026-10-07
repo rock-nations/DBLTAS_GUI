@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Observable, catchError, throwError } from 'rxjs';
 import { ApiError, TecWatchStatus, TraceAnalysis } from '../models/trace-analysis';
+import { AnalysisScenarios } from '../models/analysis-scenarios';
 
 @Injectable({
   providedIn: 'root'
@@ -25,6 +26,13 @@ export class TecWatchApiService {
   getAnalysis(): Observable<TraceAnalysis> {
     return this.http
       .get<TraceAnalysis>(`${this.baseUrl}/analysis`)
+      .pipe(catchError(err => this.toApiError(err)));
+  }
+
+  /** Failure-analysis scenarios (findings) extracted from the data-analysis workbook. */
+  getAnalysisScenarios(): Observable<AnalysisScenarios> {
+    return this.http
+      .get<AnalysisScenarios>(`${this.baseUrl}/analysis/scenarios`)
       .pipe(catchError(err => this.toApiError(err)));
   }
 

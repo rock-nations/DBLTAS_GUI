@@ -1,0 +1,92 @@
+<header class="app-header glass-card">
+  <div class="header-top">
+    <div class="brand-group">
+      <div class="brand-icon">⚡</div>
+      <div>
+        <h1 class="brand-title">DBLTAS Web GUI</h1>
+        <p class="brand-sub">tecWatch SCI-TDS Trace Analysis · DB trial operation</p>
+      </div>
+    </div>
+
+    <nav class="view-nav" aria-label="Views">
+      <a
+        id="nav-dashboard"
+        class="nav-btn"
+        routerLink="/"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        📡 Trace Analysis
+      </a>
+      <a id="nav-findings" class="nav-btn" routerLink="/findings" routerLinkActive="active">
+        🔎 Analysis Findings
+      </a>
+    </nav>
+  </div>
+
+  <!-- tecWatch status of the monitored SCI-TDS interface (GET /api/status) -->
+  @if (status) {
+    <div class="status-bar">
+      <div class="status-item">
+        <span class="status-label">tecWatch</span>
+        <span class="badge" [ngClass]="overallBadge(status.status)">{{ status.status }}</span>
+        <span class="status-sub mono">as of {{ status.timestamp | date:'HH:mm:ss' }}</span>
+      </div>
+
+      <div class="status-item" [title]="status.link.local_endpoint + ' ⇄ ' + status.link.remote_endpoint">
+        <span class="status-label">SCI-TDS link (RaSTA)</span>
+        <span id="link-state" class="status-value">
+          <span class="status-dot" [ngClass]="linkDot(status.link.state)"></span>
+          {{ status.link.state }}
+        </span>
+        <span class="status-sub">{{ status.link.protocol }} · BTP {{ status.link.btp_version }}: {{ status.link.version_check }}</span>
+      </div>
+
+      <div class="status-item">
+        <span class="status-label">Object controller</span>
+        <span class="status-value mono">{{ status.device_id }}</span>
+        <span class="status-sub mono">
+          heartbeat {{ status.link.heartbeat_interval_ms }} ms · last {{ status.link.last_message_at | date:'HH:mm:ss' }}
+        </span>
+      </div>
+
+      @for (section of status.track_sections; track section.section) {
+        <div class="status-item track-section" [class.is-disturbed]="section.occupancy === 'DISTURBED'">
+          <span class="status-label">{{ section.section_type }} {{ section.section }}</span>
+          <span class="status-value">
+            <span class="status-dot" [ngClass]="occupancyDot(section.occupancy)"></span>
+            {{ occupancyLabel(section.occupancy) }}
+          </span>
+          <span class="status-sub">
+            {{ section.resettable ? 'grundstellbar' : 'nicht grundstellbar' }} · since {{ section.since | date:'dd.MM. HH:mm:ss' }}
+          </span>
+        </div>
+      }
+
+      <div class="status-item">
+        <span class="status-label">Test unit {{ status.test_execution.test_unit }}</span>
+        <span class="status-value">{{ status.test_execution.state }}</span>
+        <span class="status-sub">
+          <span class="text-emerald">{{ status.test_execution.passed }} passed</span> ·
+          <span class="text-rose">{{ status.test_execution.failed }} failed</span> ·
+          <span class="text-amber">{{ status.test_execution.inconclusive }} inconclusive</span>
+        </span>
+      </div>
+    </div>
+
+    @if (status.active_alerts.length > 0) {
+      <ul class="alert-list" aria-label="Active alerts">
+        @for (alert of status.active_alerts; track $index) {
+          <li>⚠ {{ alert }}</li>
+        }
+      </ul>
+    }
+  } @else if (statusError) {
+    <div id="status-error" class="status-error" [title]="statusError.detail">
+      <span class="status-dot error"></span>
+      <span class="status-label">tecWatch status</span>
+      <span class="mono text-rose">{{ statusError.error }}</span>
+      <span class="status-sub">{{ statusError.detail }}</span>
+    </div>
+  }
+</header>
