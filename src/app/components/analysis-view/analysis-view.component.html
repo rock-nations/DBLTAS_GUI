@@ -1,0 +1,518 @@
+<section class="analysis glass-card">
+  <header class="analysis-head">
+    <span class="badge badge-protocol mono origin">{{ origin }} · {{ data.source_file }}</span>
+    <h2 id="analysis-title" class="analysis-title">{{ data.title }}</h2>
+  </header>
+
+  <nav class="inspector-tabs" aria-label="Analysis views">
+    <button id="tab-summary" class="tab-btn" [class.active]="activeTab === 'summary'" (click)="activeTab = 'summary'">
+      📋 Summary
+    </button>
+    <button id="tab-findings" class="tab-btn" [class.active]="activeTab === 'findings'" (click)="activeTab = 'findings'">
+      🔎 Findings ({{ data.scenarios.length }})
+    </button>
+    @if (data.timeline.length > 0) {
+      <button id="tab-timeline" class="tab-btn" [class.active]="activeTab === 'timeline'" (click)="activeTab = 'timeline'">
+        🕒 Timeline ({{ data.timeline.length }})
+      </button>
+    }
+    @if (data.gfma_state_history.states.length > 0) {
+      <button id="tab-states" class="tab-btn" [class.active]="activeTab === 'states'" (click)="activeTab = 'states'">
+        🚦 GFM-A {{ data.gfma_state_history.section }}
+      </button>
+    }
+  </nav>
+
+  <!-- SUMMARY: what went wrong and why, in plain language -->
+  @if (activeTab === 'summary') {
+    <div class="summary">
+      <section id="verdict-banner" class="verdict-banner" [ngClass]="'tone-' + tone">
+        <div class="banner-verdict">
+          <span class="verdict-label">{{ verdictLabel }}</span>
+          <p id="verdict-headline" class="verdict-headline">{{ headline }}</p>
+          @if (data.test_cases.length > 0) {
+            <p class="verdict-sub">{{ data.test_run.overall_verdict }}</p>
+          }
+        </div>
+        @if (mainCause && tone !== 'pass') {
+          <div class="banner-cause">
+            <span class="context-label">Main cause</span>
+            <p id="main-cause" class="cause-title">{{ mainCause.title }}</p>
+            <button type="button" class="link-btn" (click)="openFinding(mainCause.id)">Details in {{ mainCause.id }} →</button>
+          </div>
+        }
+      </section>
+
+      @if (data.test_cases.length > 0) {
+        <section class="summary-section">
+          <h3 class="summary-heading">Why the tests failed</h3>
+          @for (tc of notPassed; track tc.test_case_id) {
+            <article class="why-card" [ngClass]="verdictClass(tc.verdict)">
+              <header class="why-head">
+                <span class="badge" [ngClass]="verdictBadge(tc.verdict)">{{ tc.verdict }}</span>
+                <span class="why-number mono">TC{{ tc.number }}</span>
+                <span class="mono why-id">{{ tc.test_case_id }}@if (tc.variant) {<span class="text-dim">({{ tc.variant }})</span>}</span>
+              </header>
+              @if (tc.title) {
+                <p class="why-title">{{ tc.title }}</p>
+              }
+              <p class="why-text">{{ tc.root_cause }}</p>
+              <footer class="why-foot">
+                @if (tc.failure_point) {
+                  <span class="why-where"><span class="context-label">Failed at</span>{{ tc.failure_point }}</span>
+                }
+                @if (tc.scenario_ids.length > 0) {
+                  <span class="chip-row">
+                    @for (id of tc.scenario_ids; track id) {
+                      <button
+                        type="button"
+                        class="chip chip-link"
+                        [ngClass]="severityClass(scenarioSeverity(id))"
+                        [title]="scenarioTitle(id)"
+                        (click)="openFinding(id)"
+                      >
+                        {{ id }}
+                      </button>
+                    }
+                  </span>
+                }
+              </footer>
+            </article>
+          } @empty {
+            <p class="text-muted">All test cases passed.</p>
+          }
+        </section>
+      } @else {
+        <p class="summary-note">
+          No test report in this analysis, so failing test cases cannot be explained. Upload the CANoe test report
+          together with the capture to see why test cases failed.
+        </p>
+      }
+
+      <div class="summary-columns">
+        <section class="summary-section">
+          <h3 class="summary-heading">Main problems &amp; what to do</h3>
+          <ol class="action-list">
+            @for (s of mainProblems; track s.id) {
+              <li>
+                <button type="button" class="action-title" (click)="openFinding(s.id)">
+                  <span class="chip chip-link" [ngClass]="severityClass(s.severity)">{{ s.id }}</span>
+                  {{ s.title }}
+                </button>
+                <p class="action-text">{{ s.recommendation }}</p>
+              </li>
+            } @empty {
+              <li class="text-muted">No high-severity problem found.</li>
+            }
+          </ol>
+          @if (furtherFindings > 0) {
+            <button type="button" class="link-btn" (click)="activeTab = 'findings'">
+              {{ furtherFindings }} further {{ furtherFindings === 1 ? 'finding' : 'findings' }} of medium or low severity →
+            </button>
+          }
+        </section>
+
+        <section class="summary-section">
+          <h3 class="summary-heading">Working as expected</h3>
+          <ul class="ok-list">
+            @for (s of ruledOut; track s.id) {
+              <li>
+                <span class="ok-icon" aria-hidden="true">✓</span>
+                <span>{{ s.title }}</span>
+              </li>
+            }
+            @for (tc of passed; track tc.test_case_id) {
+              <li>
+                <span class="ok-icon" aria-hidden="true">✓</span>
+                <span>
+                  <strong>TC{{ tc.number }}</strong>&ngsp;<span class="mono">{{ tc.test_case_id }}</span> passed@if (tc.title) {<span class="text-muted"> – {{ tc.title }}</span>}
+                </span>
+              </li>
+            }
+            @if (ruledOut.length === 0 && passed.length === 0) {
+              <li class="text-muted">Nothing confirmed as working in this analysis.</li>
+            }
+          </ul>
+        </section>
+      </div>
+
+      <details class="run-details">
+        <summary>Test run details</summary>
+        <dl class="details-grid">
+          <div>
+            <dt>Test run</dt>
+            <dd>{{ data.test_run.name }}</dd>
+          </div>
+          <div>
+            <dt>System under test</dt>
+            <dd>{{ data.test_run.sut }}</dd>
+          </div>
+          <div>
+            <dt>Test system</dt>
+            <dd>{{ data.test_run.test_system }}</dd>
+          </div>
+          <div>
+            <dt>Time base</dt>
+            <dd>{{ data.test_run.time_correlation }}</dd>
+          </div>
+        </dl>
+      </details>
+    </div>
+  }
+
+  <!-- FINDINGS: list + detail -->
+  @if (activeTab === 'findings') {
+    <div class="explorer">
+      <aside class="explorer-list">
+        <input
+          id="findings-search"
+          type="text"
+          class="form-input"
+          placeholder="Search findings..."
+          [(ngModel)]="searchTerm"
+        />
+        <div class="filter-grid">
+          <select id="filter-severity" class="form-select" [(ngModel)]="severityFilter">
+            <option value="ALL">All severities</option>
+            @for (severity of severities; track severity) {
+              <option [value]="severity">{{ severity }}</option>
+            }
+          </select>
+          @if (data.test_cases.length > 0) {
+            <select id="filter-test-case" class="form-select" [(ngModel)]="testCaseFilter">
+              <option value="ALL">All test cases</option>
+              @for (tc of data.test_cases; track tc.test_case_id) {
+                <option [value]="tc.test_case_id">TC{{ tc.number }} · {{ tc.test_case_id.slice(-8) }}</option>
+              }
+            </select>
+          }
+        </div>
+        <div class="list-meta">
+          <span>{{ filteredScenarios.length }} of {{ data.scenarios.length }} findings</span>
+          @if (hasActiveFilters) {
+            <button type="button" class="link-btn" (click)="clearFilters()">Clear filters</button>
+          }
+        </div>
+
+        <div class="scenario-list">
+          @for (s of filteredScenarios; track s.id) {
+            <button
+              type="button"
+              class="scenario-item"
+              [ngClass]="severityClass(s.severity)"
+              [class.selected]="selectedScenario?.id === s.id"
+              (click)="selectScenario(s.id)"
+            >
+              <span class="item-top">
+                <span class="scenario-id mono">{{ s.id }}</span>
+                <span class="badge" [ngClass]="severityBadge(s.severity)">{{ s.severity }}</span>
+              </span>
+              <span class="scenario-title">{{ s.title }}</span>
+              @if (s.test_case_scope) {
+                <span class="scenario-meta">Test cases: {{ s.test_case_scope }}</span>
+              }
+            </button>
+          } @empty {
+            <p class="text-dim text-center py-4">No findings match the filters.</p>
+          }
+        </div>
+      </aside>
+
+      @if (selectedScenario; as scenario) {
+        <article class="scenario-detail" [ngClass]="severityClass(scenario.severity)">
+          <header class="detail-header">
+            <div class="detail-badges">
+              <span class="detail-id mono">{{ scenario.id }}</span>
+              <span class="badge" [ngClass]="severityBadge(scenario.severity)">{{ scenario.severity }} severity</span>
+              <span class="detail-meta">{{ confidenceText(scenario.confidence) }} · {{ scenario.category }}</span>
+            </div>
+            <div class="detail-nav">
+              <button type="button" class="step-btn" [disabled]="!canStep(-1)" (click)="stepScenario(-1)">← Previous</button>
+              <button type="button" class="step-btn" [disabled]="!canStep(1)" (click)="stepScenario(1)">Next →</button>
+            </div>
+          </header>
+
+          <h2 id="scenario-title" class="detail-title">{{ scenario.title }}</h2>
+
+          @if (scenario.applies_to_all_test_cases || testCasesFor(scenario).length > 0) {
+            <div class="context-row">
+              <span class="context-label">Test cases</span>
+              @if (scenario.applies_to_all_test_cases) {
+                <span class="chip">Whole run</span>
+              }
+              @for (tc of testCasesFor(scenario); track tc.test_case_id) {
+                <span class="chip" [title]="tc.title ?? tc.test_case_id">
+                  <span class="badge" [ngClass]="verdictBadge(tc.verdict)">{{ tc.verdict }}</span>
+                  TC{{ tc.number }} · {{ tc.test_case_id }}
+                </span>
+              }
+            </div>
+          }
+
+          <section class="detail-section">
+            <h4>What happened</h4>
+            <p>{{ scenario.symptom }}</p>
+          </section>
+
+          <section class="detail-section highlight-cause">
+            <h4>Why</h4>
+            <p>{{ scenario.root_cause }}</p>
+          </section>
+
+          <section class="detail-section highlight-action">
+            <h4>What to do</h4>
+            <p>{{ scenario.recommendation }}</p>
+          </section>
+
+          <details class="tech-details">
+            <summary>Technical details</summary>
+            @if (scenario.evidence.length > 0) {
+              <section class="detail-section">
+                <h4>Evidence <span class="text-dim">(CANoe time · frame)</span></h4>
+                <ul class="evidence-list mono">
+                  @for (line of scenario.evidence; track $index) {
+                    <li>{{ line }}</li>
+                  }
+                </ul>
+              </section>
+            }
+            @if (scenario.potential_reasons.length > 0) {
+              <section class="detail-section">
+                <h4>Possible reasons</h4>
+                <ul class="bullet-list">
+                  @for (reason of scenario.potential_reasons; track $index) {
+                    <li>{{ reason }}</li>
+                  }
+                </ul>
+              </section>
+            }
+            @if (timelineFor(scenario).length > 0) {
+              <section class="detail-section">
+                <div class="section-head">
+                  <h4>Timeline events ({{ timelineFor(scenario).length }})</h4>
+                  <button type="button" class="link-btn" (click)="showOnTimeline(scenario)">Show on timeline →</button>
+                </div>
+                <ul class="mini-timeline">
+                  @for (event of timelineFor(scenario); track $index) {
+                    <li>
+                      <span class="mono nowrap">{{ event.canoe_time_s | number:'1.3-3' }} s</span>
+                      <span class="src-tag" [ngClass]="'src-' + event.source">{{ sourceLabels[event.source] }}</span>
+                      <span>{{ event.event }}</span>
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
+            <section class="detail-section">
+              <h4>How it was found</h4>
+              <p class="text-muted">{{ scenario.method }}</p>
+            </section>
+          </details>
+        </article>
+      } @else {
+        <div class="scenario-detail empty-inspector">
+          <div class="empty-icon">🔍</div>
+          <h3>No Finding Selected</h3>
+          <p class="text-dim">No finding matches the current filters.</p>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- TIMELINE: capture telegrams and report steps on one time base -->
+  @if (activeTab === 'timeline') {
+    <div class="timeline-filters">
+      @if (data.test_cases.length > 0) {
+        <select id="timeline-test-case" class="form-select" [(ngModel)]="timelineTestCase">
+          <option value="ALL">All test cases</option>
+          <option [value]="NO_TEST_CASE">Outside test cases</option>
+          @for (tc of data.test_cases; track tc.test_case_id) {
+            <option [value]="tc.test_case_id">TC{{ tc.number }} · {{ tc.test_case_id }}</option>
+          }
+        </select>
+      }
+      <label class="toggle">
+        <input id="timeline-linked-only" type="checkbox" [(ngModel)]="timelineLinkedOnly" />
+        Only events linked to findings
+      </label>
+      @if (timelineScenario) {
+        <span class="chip chip-active">
+          Highlighting {{ timelineScenario }}
+          <button type="button" class="chip-close" aria-label="Clear highlight" (click)="timelineScenario = null">✕</button>
+        </span>
+      }
+      <span class="text-dim filter-count">{{ filteredTimeline.length }} of {{ data.timeline.length }} events</span>
+    </div>
+    <div class="table-container">
+      <table class="data-table timeline-table">
+        <thead>
+          <tr>
+            <th>CANoe time</th>
+            <th>Frame</th>
+            <th>Event</th>
+            <th>Test case</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (event of filteredTimeline; track $index) {
+            <tr [class.row-highlight]="!!timelineScenario && event.scenario_ids.includes(timelineScenario)">
+              <td class="mono nowrap" [title]="event.wall_clock ? 'Wall clock ' + event.wall_clock : ''">
+                {{ event.canoe_time_s | number:'1.3-3' }} s
+              </td>
+              <td class="mono">{{ event.pcap_frame ?? '–' }}</td>
+              <td>
+                <span class="src-tag" [ngClass]="'src-' + event.source">{{ sourceLabels[event.source] }}</span>
+                @if (event.direction) {
+                  <span class="mono text-dim direction">{{ event.direction }}</span>
+                }
+                <span class="event-text">{{ event.event }}</span>
+              </td>
+              <td class="nowrap">{{ event.phase }}</td>
+              <td>
+                {{ commentText(event) }}
+                @for (id of event.scenario_ids; track id) {
+                  <button
+                    type="button"
+                    class="chip chip-link"
+                    [ngClass]="severityClass(scenarioSeverity(id))"
+                    [title]="scenarioTitle(id)"
+                    (click)="openFinding(id)"
+                  >
+                    {{ id }}
+                  </button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="text-center text-dim py-4">No events match the filters.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- GFM-A STATES: chart over the run, state reports on demand -->
+  @if (activeTab === 'states') {
+    <p class="text-muted states-intro">
+      Belegungszustand and Grundstellbarkeit of GFM-A {{ data.gfma_state_history.section }} over the run, with the
+      AZG/AZGH commands. Hover a bar for details.
+    </p>
+
+    @if (chart) {
+      <div class="state-chart">
+        @if (chart.testCases.length > 0) {
+          <div class="chart-row">
+            <span class="chart-label">Test cases</span>
+            <div class="chart-track">
+              @for (segment of chart.testCases; track $index) {
+                <div class="segment" [ngClass]="segment.cssClass" [style.left.%]="segment.left" [style.width.%]="segment.width" [title]="segment.title">
+                  {{ segment.width > 4 ? segment.label : '' }}
+                </div>
+              }
+            </div>
+          </div>
+        }
+        <div class="chart-row">
+          <span class="chart-label">Belegungszustand</span>
+          <div class="chart-track">
+            @for (segment of chart.occupancy; track $index) {
+              <div
+                class="segment"
+                [ngClass]="segment.cssClass"
+                [class.short]="segment.width < 0.5"
+                [style.left.%]="segment.left"
+                [style.width.%]="segment.width"
+                [title]="segment.title"
+              >
+                {{ segment.width > 8 ? segment.label : '' }}
+              </div>
+            }
+          </div>
+        </div>
+        <div class="chart-row">
+          <span class="chart-label">Grundstellbarkeit</span>
+          <div class="chart-track">
+            @for (segment of chart.resettable; track $index) {
+              <div class="segment" [ngClass]="segment.cssClass" [style.left.%]="segment.left" [style.width.%]="segment.width" [title]="segment.title">
+                {{ segment.width > 8 ? segment.label : '' }}
+              </div>
+            }
+          </div>
+        </div>
+        <div class="chart-row">
+          <span class="chart-label">AZG / AZGH</span>
+          <div class="chart-track" [class.single-lane]="!chart.hasPanelCommands">
+            @for (marker of chart.commands; track $index) {
+              <div class="marker" [ngClass]="marker.cssClass" [style.left.%]="marker.left" [title]="marker.title"></div>
+            }
+          </div>
+        </div>
+        <div class="chart-row">
+          <span class="chart-label"></span>
+          <div class="chart-axis">
+            @for (tick of chart.ticks; track tick.value) {
+              <span class="tick" [style.left.%]="tick.left">{{ tick.value }} s</span>
+            }
+          </div>
+        </div>
+        <div class="chart-legend">
+          <span><i class="swatch occ-1"></i>frei</span>
+          <span><i class="swatch occ-2"></i>belegt</span>
+          <span><i class="swatch occ-3"></i>gestört</span>
+          <span><i class="swatch res-yes"></i>grundstellbar</span>
+          <span><i class="swatch res-no"></i>nicht grundstellbar</span>
+          <span><i class="swatch cmd-wire"></i>AZG/AZGH command</span>
+          @if (chart.hasPanelCommands) {
+            <span><i class="swatch cmd-panel"></i>ZE panel action (BLF)</span>
+          }
+        </div>
+      </div>
+    }
+
+    <details class="state-details">
+      <summary>All state reports ({{ data.gfma_state_history.states.length }})</summary>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>CANoe time</th>
+              <th>Frame</th>
+              <th>Belegungszustand</th>
+              <th>Grundstellungsfähigkeit</th>
+              <th>Axle count</th>
+              <th>Duration</th>
+              <th>Test case</th>
+              <th>Remark</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (state of data.gfma_state_history.states; track $index) {
+              <tr [class.row-error]="state.occupancy_code === 3" [class.row-warning]="state.occupancy_code === 2">
+                <td class="mono nowrap">{{ state.canoe_time_s | number:'1.3-3' }} s</td>
+                <td class="mono">{{ state.pcap_frame ?? '–' }}</td>
+                <td>
+                  <span class="state-pill" [ngClass]="'occ-' + state.occupancy_code">{{ state.occupancy_code }} {{ state.occupancy }}</span>
+                </td>
+                <td>
+                  <span class="state-pill" [ngClass]="state.resettable_code === 1 ? 'res-yes' : 'res-no'">
+                    {{ state.resettable_code }} {{ state.resettable }}
+                  </span>
+                </td>
+                <td class="mono">{{ state.axle_count }}</td>
+                <td class="mono nowrap">{{ state.duration_s | number:'1.3-3' }} s</td>
+                <td class="nowrap">{{ testCaseLabel(state.test_case_id) }}</td>
+                <td>{{ state.remark }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      @if (data.gfma_state_history.coding_note) {
+        <p class="footnote">{{ data.gfma_state_history.coding_note }}</p>
+      }
+    </details>
+  }
+</section>

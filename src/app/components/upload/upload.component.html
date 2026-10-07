@@ -1,0 +1,96 @@
+<div class="upload-layout">
+  <section class="upload-card glass-card">
+    <div class="upload-head">
+      <div>
+        <h2 id="upload-title">Upload &amp; Analyze</h2>
+        <p class="text-muted upload-intro">
+          Upload the files of a test run. The capture shows what happened on the SCI-TDS interface, the CANoe test
+          report shows which steps failed. Together they explain why the tests failed.
+        </p>
+      </div>
+      @if (result || files.capture || files.report) {
+        <button id="upload-reset" type="button" class="btn btn-outline" [disabled]="uploading" (click)="startOver()">
+          Start over
+        </button>
+      }
+    </div>
+
+    <div class="dropzones">
+      @for (zone of zones; track zone.kind) {
+        <div
+          class="dropzone"
+          [class.has-file]="!!files[zone.kind]"
+          [class.drag-over]="dragOver === zone.kind"
+          [class.has-error]="!!fileErrors[zone.kind]"
+          (dragover)="onDragOver(zone.kind, $event)"
+          (dragleave)="onDragLeave(zone.kind)"
+          (drop)="onDrop(zone.kind, $event)"
+        >
+          <label class="dz-label" [attr.for]="'upload-' + zone.kind">
+            <span class="dz-icon" aria-hidden="true">{{ zone.icon }}</span>
+            <span class="dz-text">
+              <span class="dz-title">{{ zone.title }}</span>
+              <span class="dz-hint">{{ zone.hint }}</span>
+            </span>
+            @if (!files[zone.kind]) {
+              <span class="dz-action">Drop file here or <span class="dz-browse">browse</span></span>
+            }
+          </label>
+          <input
+            class="visually-hidden"
+            type="file"
+            [id]="'upload-' + zone.kind"
+            [accept]="zone.accept"
+            [disabled]="uploading"
+            (change)="onFileSelected(zone.kind, $event)"
+          />
+          @if (files[zone.kind]; as file) {
+            <div class="dz-file">
+              <span class="dz-check" aria-hidden="true">✓</span>
+              <span class="mono dz-name" [title]="file.name">{{ file.name }}</span>
+              <span class="text-dim nowrap">{{ formatSize(file.size) }}</span>
+              <button
+                type="button"
+                class="dz-remove"
+                [attr.aria-label]="'Remove ' + file.name"
+                [disabled]="uploading"
+                (click)="removeFile(zone.kind)"
+              >
+                ✕
+              </button>
+            </div>
+          }
+          @if (fileErrors[zone.kind]) {
+            <p class="dz-error" role="alert">{{ fileErrors[zone.kind] }}</p>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="upload-actions">
+      <button id="upload-analyze" type="button" class="btn btn-primary" [disabled]="!canAnalyze" (click)="analyze()">
+        {{ uploading ? 'Analysing…' : '🔍 Analyze files' }}
+      </button>
+      <span class="text-dim upload-note">
+        Both files give the full picture; one is enough to start. Max. 50 MB each. The files are analysed and not stored.
+      </span>
+    </div>
+
+    @if (error) {
+      <div id="upload-error" class="upload-error" role="alert">
+        <strong>{{ error.error }}</strong>
+        <span>{{ error.detail }}</span>
+      </div>
+    }
+  </section>
+
+  @if (result) {
+    <app-analysis-view [data]="result" [origin]="'Uploaded files'"></app-analysis-view>
+  } @else if (!uploading) {
+    <div class="glass-card empty-inspector">
+      <div class="empty-icon">🗂</div>
+      <h3>No Analysis Yet</h3>
+      <p class="text-dim">Choose a capture and/or a test report above and select Analyze files.</p>
+    </div>
+  }
+</div>

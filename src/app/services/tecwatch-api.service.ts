@@ -36,6 +36,23 @@ export class TecWatchApiService {
       .pipe(catchError(err => this.toApiError(err)));
   }
 
+  /**
+   * Uploads the files of a test run (capture and/or CANoe test report). The backend analyses them
+   * in memory and returns the findings in the analysis-scenarios format; nothing is stored.
+   */
+  uploadForAnalysis(capture: File | null, report: File | null): Observable<AnalysisScenarios> {
+    const form = new FormData();
+    if (capture) {
+      form.append('capture', capture, capture.name);
+    }
+    if (report) {
+      form.append('report', report, report.name);
+    }
+    return this.http
+      .post<AnalysisScenarios>(`${this.baseUrl}/analysis/upload`, form)
+      .pipe(catchError(err => this.toApiError(err)));
+  }
+
   private toApiError(err: HttpErrorResponse): Observable<never> {
     const body = err.error;
     const apiError: ApiError =

@@ -1,4 +1,5 @@
 export type Severity = 'High' | 'Medium' | 'Low' | 'Info';
+export type Verdict = 'Pass' | 'Fail' | 'Inconclusive' | 'Error' | 'None';
 export type Confidence = 'High' | 'Medium' | 'Low';
 export type SourceType = 'pdf' | 'pcap' | 'blf' | 'write_log' | 'test_spec' | 'telegram_xlsx' | 'lua_dissector';
 
@@ -16,7 +17,7 @@ export interface ScenarioTestCase {
   test_case_id: string;
   variant: string | null;
   title: string | null;
-  verdict: 'Pass' | 'Fail' | 'Inconclusive';
+  verdict: Verdict;
   window_start_s: number;
   window_end_s: number;
   failure_point: string | null;
@@ -49,7 +50,7 @@ export interface Scenario {
 
 export interface TimelineEvent {
   canoe_time_s: number;
-  wall_clock: string;
+  wall_clock: string | null;
   pcap_frame: number | null;
   source: SourceType;
   direction: string | null;
@@ -88,7 +89,10 @@ export interface OpenQuestion {
   scenario_ids: string[];
 }
 
-/** Failure-analysis scenarios returned by GET /api/analysis/scenarios (extracted from the analysis workbook). */
+/**
+ * Failure-analysis scenarios: returned by GET /api/analysis/scenarios (extracted from the analysis workbook)
+ * and by POST /api/analysis/upload (analysis of an uploaded capture and/or CANoe test report).
+ */
 export interface AnalysisScenarios {
   source_file: string;
   title: string;

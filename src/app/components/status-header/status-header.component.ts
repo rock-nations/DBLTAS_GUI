@@ -51,6 +51,8 @@ export class StatusHeaderComponent implements OnInit {
         return 'badge-passed';
       case 'DEGRADED':
         return 'badge-warning';
+      case 'DISCONNECTED':
+        return 'badge-serious';
       case 'FAULT':
         return 'badge-failed';
       default:
