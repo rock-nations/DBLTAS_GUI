@@ -1,15 +1,14 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { TraceAnalysis } from '../models/trace-analysis';
 
 @Pipe({
   name: 'filterStatus',
   standalone: false
 })
 export class FilterStatusPipe implements PipeTransform {
-  transform(items: TraceAnalysis[], status: string): TraceAnalysis[] {
+  transform<T extends { status: string }>(items: T[], status: string): T[] {
     if (!items || !status) {
       return items;
     }
-    return items.filter(item => item.result_status.toUpperCase() === status.toUpperCase());
+    return items.filter(item => item.status.toUpperCase() === status.toUpperCase());
   }
 }

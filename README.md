@@ -6,26 +6,28 @@ An interactive Web GUI built with **Angular (Module-Based Architecture / `NgModu
 
 ## 🌟 Key Features
 
-- **Interactive Trace Dashboard**: Real-time overview of monitored capture runs, pass/fail status, and live telemetry from the tecWatch hardware (battery %, temperature °C, uptime).
-- **📡 Trace-Data View**: Visualizes timestamp, sender, receiver, communication protocol (CAN, TCP, Modbus), message type, status, and highlighted error reasons.
-- **🚨 Failure-Analysis View**: Card-based diagnostic inspection of packet failures, prominently highlighting expected vs. actual packet lengths:
+- **Read-Only Analysis Dashboard**: On initial load the GUI calls `GET /api/status` (live tecWatch telemetry: battery %, temperature °C, status) and `GET /api/analysis` (the validated analysis report). The GUI never posts analysis data.
+- **🧪 Test-Case Navigator**: Lists every test case of the report with its verdict (`PASSED`, `FAILED`, `INCONCLUSIVE`) and message/finding/check counts, plus a trace-wide group for start-up telegrams and global checks. Selecting one scopes all three views.
+- **📡 Trace-Data View**: Visualizes timestamp, message ID, sender → receiver, message type, code, protocol, length, status (`OK`, `FAILED`, `WARNING`) and highlighted error reasons. Click a message for the detailed view with decoded telegram fields and related findings.
+- **🚨 Failure-Analysis View**: Card-based root-cause findings with category, confidence, diagnostic description and evidence sources. Length findings show the expected vs. actual comparison:
   ```text
-  Message 127
-  Expected Length: 64
-  Actual Length:   60
+  Message frame-380-2
+  Expected Length: 48 bytes
+  Actual Length:   47 bytes
   Result:          Message Length Error
   ```
-- **⚖️ Data-Structure Comparison View**: Field-by-field verification table with visual error highlighting:
+- **⚖️ Data-Structure Comparison View**: Field-by-field verification table with error and warning highlighting:
   | Field | Expected | Actual | Result |
   | :--- | :--- | :--- | :--- |
-  | `MessageID` | 1001 | 1001 | **OK** |
-  | `Length` | 64 | 60 | **Error** |
-  | `Status` | READY | READY | **OK** |
-- **Search & Multi-Filter Engine**: Filter traces by status (`FAILED`, `PASSED`), protocol (`CAN`, `TCP`, `MODBUS`), or free-text search across messages.
-- **Sorting**: Toggle sorting by timestamp or status.
+  | `Test verdict` | PASSED | FAILED | **Error** |
+  | `Length MELDUNG_GFMA_BELEGUNGSZUSTAND` | 48 | 47 | **Error** |
+  | `RaSTA message gap` | <= 750 ms | max 306 ms | **OK** |
+- **Search & Filter**: Free-text search across messages, decoded fields, findings and comparisons; filter by status (`FAILED`/`Error`, `WARNING`, `OK`).
+- **Sorting**: Toggle sorting of trace messages by time or status severity.
+- **Backend Error Reporting**: If the backend rejects the analysis report (e.g. missing fields, wrong data types, unexpected content), the GUI shows the error and each validation error instead of stale or fake data. An unreachable tecWatch server is shown in the status widget.
 - **⚡ Animated API Loading Screen**:
   - Global `LoadingInterceptor` automatically detects every in-flight API call.
-  - Renders a glowing neon radar pulse ring with glassmorphic modal, streaming top progress bar, and active endpoint badge (e.g. `POST /api/analysis` or `GET /api/status`).
+  - Renders a glowing neon radar pulse ring with glassmorphic modal, streaming top progress bar, and active endpoint badge (e.g. `GET /api/analysis` or `GET /api/status`).
 - **Direct Backend Integration**: Connects to the tecWatch API Gateway running at `http://localhost:8000/api`.
 
 ---
@@ -46,11 +48,11 @@ DBLTAS_GUI/
 │   │   │       ├── dashboard.component.html
 │   │   │       └── dashboard.component.css
 │   │   ├── models/
-│   │   │   └── trace-analysis.ts     # TypeScript interfaces (TraceMessage, FailureFinding, DataComparison)
+│   │   │   └── trace-analysis.ts     # TypeScript interfaces of the analysis report (TraceMessage, FailureFinding, DataComparison)
 │   │   ├── pipes/
-│   │   │   └── filter-status.pipe.ts # Status count & filter pipe
+│   │   │   └── filter-status.pipe.ts # Status count & filter pipe (test cases, messages)
 │   │   └── services/
-│   │       └── tecwatch-api.service.ts # HTTP service calling backend API (/api/status, /api/analysis)
+│   │       └── tecwatch-api.service.ts # HTTP service calling backend API (GET /api/status, GET /api/analysis)
 │   ├── styles.css                    # Dark-mode design system with glassmorphism tokens
 │   └── index.html                    # HTML shell loading Google Fonts (Outfit & JetBrains Mono)
 ├── angular.json
@@ -85,18 +87,15 @@ Open your browser and navigate to:
 
 ---
 
-## 🧪 Interactive Demo & Test Scenarios
+## 🧪 Test Scenarios
 
-The GUI includes a quick scenario injector bar at the top:
-1. **🚨 CAN Length Error (Msg 127)**: Sends and renders a CAN bus frame error with expected length 64 vs actual 60.
-2. **✅ Ethernet Clean Pass**: Injects a nominal TCP socket session with zero failure findings.
-3. **⚠️ Modbus Overflow Error**: Injects a register boundary overflow scenario.
+The data shown comes from the analysis report file configured in the backend (`analysis.report_path`, default `backend/data/data-analysis-report.json`). The backend reads it on every request, so:
+1. **New report**: Replace the report file and reload the page — the GUI shows the new analysis.
+2. **Invalid report**: Break the report (e.g. set a `length` to `"47"` or add an unknown field) and reload — the GUI lists the backend's validation errors.
+3. **tecWatch offline**: Stop the tecWatch (mock) server and reload — the status widget shows the gateway error while the analysis stays available.
+
+Unit tests: `npx ng test --watch=false`
 
 ---
 
-## 📋 Completion Criteria Verification
 
-- [x] Inspect an analysis result from the list.
-- [x] Identify failed messages clearly in the **Failure-Analysis View**.
-- [x] See the specific reason for failure (e.g. Message Length Error).
-- [x] Compare expected vs. actual data in the **Data-Comparison View**.
