@@ -69,50 +69,33 @@
   font-weight: 600;
 }
 
-/* Demo Scenario Bar */
-.demo-bar {
+/* Analysis Report Error Panel */
+.error-panel {
+  padding: 20px 24px;
+  border-left: 4px solid var(--accent-rose);
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 20px;
-  background: rgba(99, 102, 241, 0.08);
-  border: 1px solid rgba(99, 102, 241, 0.25);
-  border-radius: 12px;
-}
-
-.demo-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
-}
-
-.demo-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.btn-reset {
-  background: rgba(244, 63, 94, 0.08);
-  border-color: rgba(244, 63, 94, 0.3);
-  color: #fb7185;
-}
-
-.btn-reset:hover {
-  background: rgba(244, 63, 94, 0.2);
-  border-color: var(--accent-rose);
-  color: #fff;
-}
-
-.alert-banner {
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.4);
-  color: var(--accent-emerald);
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 600;
+  flex-direction: column;
+  gap: 14px;
   animation: fadeIn 0.3s ease;
+}
+
+.error-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.error-panel-header h2 {
+  font-size: 1.15rem;
+}
+
+.error-icon {
+  font-size: 1.8rem;
+}
+
+.error-detail {
+  color: var(--text-muted);
+  font-size: 0.925rem;
 }
 
 /* Metrics Grid */
@@ -190,12 +173,6 @@
   width: 100%;
 }
 
-.filter-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
 .sort-row {
   display: flex;
   align-items: center;
@@ -227,7 +204,7 @@
   flex-direction: column;
   gap: 10px;
   overflow-y: auto;
-  max-height: 620px;
+  max-height: 680px;
   padding-right: 4px;
 }
 
@@ -257,6 +234,10 @@
 
 .analysis-item.has-error {
   border-left: 3px solid var(--accent-rose);
+}
+
+.analysis-item.has-warning {
+  border-left: 3px solid var(--accent-amber);
 }
 
 .item-top {
@@ -405,12 +386,90 @@
   background: rgba(244, 63, 94, 0.06);
 }
 
+.data-table tr.row-warning td {
+  background: rgba(245, 158, 11, 0.06);
+}
+
 .error-highlight {
+  display: inline-block;
   color: var(--accent-rose);
   font-weight: 600;
   background: rgba(244, 63, 94, 0.15);
   padding: 3px 8px;
   border-radius: 4px;
+}
+
+.error-highlight.warning-highlight {
+  color: var(--accent-amber);
+  background: var(--accent-amber-bg);
+}
+
+.trace-table th,
+.trace-table td {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.cell-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--text-dim);
+}
+
+/* Detailed Message View (expandable trace rows) */
+.message-row {
+  cursor: pointer;
+}
+
+.data-table tr.message-row.expanded td {
+  background: rgba(99, 102, 241, 0.12);
+}
+
+.data-table tr.message-detail-row td {
+  background: rgba(15, 23, 42, 0.9);
+  padding: 14px 16px 16px;
+}
+
+.message-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.field-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.field-chip {
+  background: rgba(6, 182, 212, 0.1);
+  border: 1px solid rgba(6, 182, 212, 0.25);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+}
+
+.detail-finding {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.825rem;
+  color: var(--text-muted);
 }
 
 /* Failure Cards Grid */
@@ -427,14 +486,21 @@
 
 .failure-card-header {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
   margin-bottom: 14px;
 }
 
 .failure-id {
   font-size: 1.05rem;
   font-weight: 700;
+  white-space: nowrap;
+}
+
+.failure-card-header .badge {
+  white-space: nowrap;
 }
 
 /* Exact Diff Box from Requirements */
@@ -477,9 +543,30 @@
   font-weight: 600;
 }
 
+.failure-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-bottom: 12px;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
 .failure-explanation {
   font-size: 0.8rem;
   color: var(--text-muted);
+}
+
+.evidence-list {
+  margin-top: 10px;
+  padding-left: 18px;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+
+.failure-time {
+  margin-top: 10px;
+  font-size: 0.75rem;
 }
 
 /* Comparison Table Cells */
@@ -494,6 +581,11 @@
 
 .comparison-table .actual-error-cell {
   color: var(--accent-rose);
+  font-weight: 700;
+}
+
+.comparison-table .actual-warning-cell {
+  color: var(--accent-amber);
   font-weight: 700;
 }
 
