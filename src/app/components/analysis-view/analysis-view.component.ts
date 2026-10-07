@@ -10,7 +10,7 @@ import {
   Verdict
 } from '../../models/analysis-scenarios';
 
-export type AnalysisTab = 'summary' | 'findings' | 'timeline' | 'states';
+export type AnalysisTab = 'summary' | 'findings' | 'timeline' | 'states' | 'traffic';
 export type VerdictTone = 'fail' | 'warning' | 'pass' | 'trace';
 
 export const SEVERITIES: Severity[] = ['High', 'Medium', 'Low', 'Info'];

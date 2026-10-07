@@ -1,0 +1,203 @@
+<div class="io-graph">
+  <header class="io-head">
+    <div>
+      <h3 id="io-title" class="io-title">I/O Graph</h3>
+      <p class="io-sub">
+        <span class="mono">{{ graph.capture_file }}</span> · {{ graph.total_packets | number }} packets ·
+        {{ durationLabel }} · times in {{ timeBase }}
+      </p>
+    </div>
+    <div class="io-controls">
+      <label class="control-label" for="io-interval">Interval</label>
+      <select id="io-interval" class="form-select" [ngModel]="aggregation" (ngModelChange)="setAggregation($event)">
+        @for (multiple of aggregationOptions; track multiple) {
+          <option [ngValue]="multiple">{{ intervalLabel(multiple) }}</option>
+        }
+      </select>
+      @if (zoomed) {
+        <button id="io-reset-zoom" type="button" class="btn btn-outline" (click)="resetZoom()">Reset zoom</button>
+      }
+    </div>
+  </header>
+
+  <div class="chart">
+    <span class="y-unit">Packets / {{ intervalLabel(aggregation) }}</span>
+    <div class="chart-grid">
+      @if (tcSegments.length > 0) {
+        <span class="strip-label">Test cases</span>
+        <div class="tc-strip">
+          @for (segment of tcSegments; track segment.label) {
+            <div
+              class="tc-segment"
+              [ngClass]="segment.cssClass"
+              [style.left.%]="segment.left"
+              [style.width.%]="segment.width"
+              [title]="segment.title"
+            >
+              {{ segment.width > 5 ? segment.label : '' }}
+            </div>
+          }
+        </div>
+      }
+
+      <div class="y-axis" aria-hidden="true">
+        @for (tick of yTicks; track tick.label) {
+          <span class="y-tick" [style.bottom.%]="tick.position">{{ tick.label }}</span>
+        }
+      </div>
+      <div
+        id="io-plot"
+        class="plot"
+        role="img"
+        [attr.aria-label]="'Packets per ' + intervalLabel(aggregation) + ' over the capture; values are listed in the table below'"
+        (mousedown)="onPointerDown($event)"
+        (mousemove)="onPointerMove($event)"
+        (mouseup)="onPointerUp($event)"
+        (mouseleave)="onPointerLeave()"
+      >
+        <svg class="plot-svg" [attr.viewBox]="'0 0 ' + plotWidth + ' ' + plotHeight" preserveAspectRatio="none">
+          @for (tick of yTicks; track tick.label) {
+            <line
+              class="grid-line"
+              [class.baseline]="tick.position === 0"
+              x1="0"
+              [attr.x2]="plotWidth"
+              [attr.y1]="plotHeight - tick.position / 100 * plotHeight"
+              [attr.y2]="plotHeight - tick.position / 100 * plotHeight"
+              vector-effect="non-scaling-stroke"
+            />
+          }
+          @for (line of lines; track line.key) {
+            <polyline [attr.class]="'series-line ' + line.cssClass" [attr.points]="line.points" vector-effect="non-scaling-stroke" />
+          }
+        </svg>
+
+        @if (selection) {
+          <div class="selection" [style.left.%]="selection.left" [style.width.%]="selection.width"></div>
+        }
+        @if (hover; as info) {
+          <div class="crosshair" [style.left.%]="info.left"></div>
+          @for (row of info.rows; track row.name) {
+            <span class="hover-dot" [ngClass]="row.cssClass" [style.left.%]="info.left" [style.bottom.%]="row.bottom"></span>
+          }
+          <div id="io-tooltip" class="tooltip" [class.flip]="info.flip" [style.left.%]="info.left">
+            <p class="tooltip-time mono">{{ info.time }}</p>
+            <p class="tooltip-detail">{{ info.detail }}</p>
+            @for (row of info.rows; track row.name) {
+              <p class="tooltip-row">
+                <span class="swatch" [ngClass]="row.cssClass"></span>
+                <span class="tooltip-name">{{ row.name }}</span>
+                <span class="mono tooltip-value">{{ row.value }}</span>
+              </p>
+            }
+          </div>
+        }
+      </div>
+
+      <span></span>
+      <div class="x-axis" aria-hidden="true">
+        @for (tick of xTicks; track $index) {
+          <span class="x-tick" [class.edge-start]="tick.position < 6" [class.edge-end]="tick.position > 94" [style.left.%]="tick.position">
+            <span class="mono">{{ tick.label }}</span>
+            @if (tick.sub) {
+              <span class="x-date">{{ tick.sub }}</span>
+            }
+          </span>
+        }
+      </div>
+    </div>
+    <p class="chart-hint">Drag across the graph to zoom in · hover for the values of an interval</p>
+  </div>
+
+  <section class="series-panel" aria-label="Graphs">
+    <div class="series-tools">
+      <input
+        id="io-search"
+        type="text"
+        class="form-input"
+        placeholder="Filter IP addresses, e.g. 10.129"
+        [(ngModel)]="searchTerm"
+      />
+      <button id="io-show-matching" type="button" class="btn btn-outline" (click)="showMatching()">Show matching</button>
+      <button id="io-hide-all" type="button" class="btn btn-outline" (click)="hideAll()">Hide all</button>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table series-table">
+        <thead>
+          <tr>
+            <th class="col-show">Show</th>
+            <th>Graph</th>
+            <th>Display filter</th>
+            <th>Direction</th>
+            <th class="text-right">Packets</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr [class.row-off]="!allPackets.enabled">
+            <td class="col-show">
+              <input
+                id="io-show-all-packets"
+                type="checkbox"
+                [checked]="allPackets.enabled"
+                (change)="toggle(allPackets, $any($event.target).checked)"
+                aria-label="Show all packets"
+              />
+            </td>
+            <td><span class="swatch" [ngClass]="seriesClass(allPackets)"></span>All packets</td>
+            <td class="mono text-dim">{{ displayFilter(allPackets) }}</td>
+            <td class="text-dim">–</td>
+            <td class="mono text-right">{{ packetCount(allPackets) | number }}</td>
+          </tr>
+          @for (series of hostSeries; track series.key) {
+            <tr class="host-row" [class.row-off]="!series.enabled">
+              <td class="col-show">
+                <input
+                  type="checkbox"
+                  [checked]="series.enabled"
+                  (change)="toggle(series, $any($event.target).checked); $any($event.target).checked = series.enabled"
+                  [attr.aria-label]="'Show ' + series.host!.address"
+                />
+              </td>
+              <td>
+                <span class="swatch" [ngClass]="seriesClass(series)"></span>
+                @if (series.host!.role) {
+                  <span class="host-role">{{ series.host!.role }}</span>&ngsp;
+                }
+                <span class="mono host-address">{{ series.host!.address }}</span>
+              </td>
+              <td class="mono">{{ displayFilter(series) }}</td>
+              <td>
+                <select
+                  class="form-select direction-select"
+                  [ngModel]="series.direction"
+                  (ngModelChange)="setDirection(series, $event)"
+                  [attr.aria-label]="'Direction for ' + series.host!.address"
+                >
+                  <option value="src">Sent (src)</option>
+                  <option value="dst">Received (dst)</option>
+                  <option value="addr">Both (addr)</option>
+                </select>
+              </td>
+              <td class="mono text-right">{{ packetCount(series) | number }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="text-center text-dim py-4">No IP address matches the filter.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (limitMessage) {
+      <p id="io-limit" class="limit-message" role="status">{{ limitMessage }}</p>
+    }
+    @if (graph.other_hosts > 0) {
+      <p class="footnote">
+        {{ graph.other_hosts }} more {{ graph.other_hosts === 1 ? 'address' : 'addresses' }} with fewer packets
+        {{ graph.other_hosts === 1 ? 'is' : 'are' }} only counted in All packets.
+      </p>
+    }
+  </section>
+</div>

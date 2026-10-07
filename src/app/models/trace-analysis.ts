@@ -39,6 +39,8 @@ export interface TecWatchStatus {
   track_sections: TrackSectionStatus[];
   test_execution: TestExecutionStatus;
   active_alerts: string[];
+  /** 'simulated' when the tecWatch server was not reachable and the backend returned its built-in status. */
+  source?: 'tecwatch' | 'simulated';
 }
 
 export type FieldValue = string | number | boolean | null;

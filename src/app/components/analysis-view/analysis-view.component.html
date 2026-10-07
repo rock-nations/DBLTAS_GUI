@@ -21,6 +21,11 @@
         🚦 GFM-A {{ data.gfma_state_history.section }}
       </button>
     }
+    @if (data.io_graph) {
+      <button id="tab-traffic" class="tab-btn" [class.active]="activeTab === 'traffic'" (click)="activeTab = 'traffic'">
+        📈 I/O Graph
+      </button>
+    }
   </nav>
 
   <!-- SUMMARY: what went wrong and why, in plain language -->
@@ -392,6 +397,11 @@
         </tbody>
       </table>
     </div>
+  }
+
+  <!-- I/O GRAPH: packets per interval of the uploaded capture, per selected IP address -->
+  @if (activeTab === 'traffic' && data.io_graph) {
+    <app-io-graph [graph]="data.io_graph" [testCases]="data.test_cases"></app-io-graph>
   }
 
   <!-- GFM-A STATES: chart over the run, state reports on demand -->
