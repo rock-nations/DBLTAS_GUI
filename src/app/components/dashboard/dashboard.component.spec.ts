@@ -3,13 +3,12 @@ import { Observable, of, throwError } from 'rxjs';
 import { AppModule } from '../../app-module';
 import { DashboardComponent, TRACE_WIDE } from './dashboard.component';
 import { TecWatchApiService } from '../../services/tecwatch-api.service';
-import { ApiError, TraceAnalysis, TecWatchStatus } from '../../models/trace-analysis';
+import { ApiError, TraceAnalysis } from '../../models/trace-analysis';
 
 describe('DashboardComponent', () => {
   let component: DashboardComponent;
   let fixture: ComponentFixture<DashboardComponent>;
   let compiled: HTMLElement;
-  let statusCalls: number;
   let analysisCalls: number;
 
   const sampleReport: TraceAnalysis = {
@@ -121,16 +120,6 @@ describe('DashboardComponent', () => {
     ]
   };
 
-  const sampleStatus: TecWatchStatus = {
-    device_id: 'TW-01',
-    status: 'OPERATIONAL',
-    battery_level: 95.0,
-    uptime_seconds: 50000,
-    temperature: 28.0,
-    timestamp: new Date().toISOString(),
-    active_alerts: []
-  };
-
   const invalidReportError: ApiError = {
     status: 500,
     error: 'Invalid Analysis Report',
@@ -145,17 +134,11 @@ describe('DashboardComponent', () => {
   };
 
   async function setup(overrides: {
-    getStatus?: () => Observable<TecWatchStatus>;
     getAnalysis?: () => Observable<TraceAnalysis>;
   } = {}): Promise<void> {
-    statusCalls = 0;
     analysisCalls = 0;
     const mockApiService = {
       baseUrl: 'http://localhost:8000/api',
-      getStatus: () => {
-        statusCalls++;
-        return overrides.getStatus ? overrides.getStatus() : of(sampleStatus);
-      },
       getAnalysis: () => {
         analysisCalls++;
         return overrides.getAnalysis ? overrides.getAnalysis() : of(structuredClone(sampleReport));
@@ -179,12 +162,10 @@ describe('DashboardComponent', () => {
     fixture.detectChanges();
   }
 
-  it('should load tecWatch status and the analysis report on initial load', async () => {
+  it('should load the analysis report on initial load', async () => {
     await setup();
 
-    expect(statusCalls).toBe(1);
     expect(analysisCalls).toBe(1);
-    expect(component.tecWatchStatus?.device_id).toBe('TW-01');
     expect(component.report?.analysis_id).toBe('TRACE-RUN-20261002-102359');
     expect(compiled.querySelector('.run-title')?.textContent).toContain('TRACE-RUN-20261002-102359');
   });
@@ -299,14 +280,5 @@ describe('DashboardComponent', () => {
     expect(errorPanel?.textContent).toContain('Invalid Analysis Report');
     expect(errorPanel?.textContent).toContain('trace_messages -> 1 -> length');
     expect(compiled.querySelector('.metrics-grid')).toBeNull();
-  });
-
-  it('should show when the tecWatch status is unavailable', async () => {
-    await setup({
-      getStatus: () => throwError(() => ({ ...invalidReportError, status: 502, error: 'Bad Gateway', validation_errors: [] }))
-    });
-
-    expect(compiled.querySelector('#status-error')?.textContent).toContain('Bad Gateway');
-    expect(compiled.querySelector('.run-title')?.textContent).toContain('TRACE-RUN-20261002-102359');
   });
 });

@@ -5,7 +5,6 @@ import {
   DataComparison,
   FailureFinding,
   FieldValue,
-  TecWatchStatus,
   TraceAnalysis,
   TraceMessage
 } from '../../models/trace-analysis';
@@ -34,8 +33,6 @@ export class DashboardComponent implements OnInit {
   readonly ALL_TEST_CASES = ALL_TEST_CASES;
   readonly TRACE_WIDE = TRACE_WIDE;
 
-  tecWatchStatus: TecWatchStatus | null = null;
-  statusError: ApiError | null = null;
   report: TraceAnalysis | null = null;
   analysisError: ApiError | null = null;
   testCases: TestCaseSummary[] = [];
@@ -55,8 +52,7 @@ export class DashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Initial load: tecWatch status (proxied by the backend) and the validated analysis report
-    this.loadStatus();
+    // Initial load: the validated analysis report (the tecWatch status is loaded by the status header)
     this.loadAnalysis();
   }
 
@@ -65,21 +61,6 @@ export class DashboardComponent implements OnInit {
   }
 
   // The app is zoneless, so HTTP callbacks mark the view for check themselves
-  loadStatus(): void {
-    this.apiService.getStatus().subscribe({
-      next: status => {
-        this.tecWatchStatus = status;
-        this.statusError = null;
-        this.changeDetector.markForCheck();
-      },
-      error: (err: ApiError) => {
-        this.tecWatchStatus = null;
-        this.statusError = err;
-        this.changeDetector.markForCheck();
-      }
-    });
-  }
-
   loadAnalysis(): void {
     this.apiService.getAnalysis().subscribe({
       next: report => {

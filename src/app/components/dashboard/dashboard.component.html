@@ -1,47 +1,4 @@
 <div class="dashboard-layout">
-  <!-- Top Navigation & System Status Bar -->
-  <header class="top-nav glass-card">
-    <div class="brand-group">
-      <div class="brand-icon">⚡</div>
-      <div>
-        <h1 class="brand-title">DBLTAS Web GUI</h1>
-        <p class="brand-sub">tecWatch Interactive Trace Analysis & Diagnostic Engine</p>
-      </div>
-    </div>
-
-    <!-- Live tecWatch Device Telemetry Widget (GET /api/status) -->
-    @if (tecWatchStatus) {
-      <div class="device-telemetry glass-card">
-        <div class="telemetry-pill">
-          <span class="status-dot" [ngClass]="tecWatchStatus.status === 'OPERATIONAL' ? 'active' : 'error'"></span>
-          <span class="telemetry-label">Device:</span>
-          <span class="telemetry-val mono">{{ tecWatchStatus.device_id }}</span>
-        </div>
-        <div class="telemetry-pill">
-          <span class="telemetry-label">Battery:</span>
-          <span class="telemetry-val mono text-emerald">{{ tecWatchStatus.battery_level }}%</span>
-        </div>
-        <div class="telemetry-pill">
-          <span class="telemetry-label">Temp:</span>
-          <span class="telemetry-val mono text-amber">{{ tecWatchStatus.temperature }}°C</span>
-        </div>
-        <div class="telemetry-pill">
-          <span class="badge" [ngClass]="'badge-' + tecWatchStatus.status.toLowerCase()">
-            {{ tecWatchStatus.status }}
-          </span>
-        </div>
-      </div>
-    } @else if (statusError) {
-      <div id="status-error" class="device-telemetry glass-card" [title]="statusError.detail">
-        <div class="telemetry-pill">
-          <span class="status-dot error"></span>
-          <span class="telemetry-label">tecWatch status:</span>
-          <span class="telemetry-val mono text-rose">{{ statusError.error }}</span>
-        </div>
-      </div>
-    }
-  </header>
-
   <!-- Analysis report could not be served (GET /api/analysis failed) -->
   @if (analysisError) {
     <section id="analysis-error" class="error-panel glass-card">

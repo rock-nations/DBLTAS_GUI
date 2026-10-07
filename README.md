@@ -6,7 +6,16 @@ An interactive Web GUI built with **Angular (Module-Based Architecture / `NgModu
 
 ## 🌟 Key Features
 
-- **Read-Only Analysis Dashboard**: On initial load the GUI calls `GET /api/status` (live tecWatch telemetry: battery %, temperature °C, status) and `GET /api/analysis` (the validated analysis report). The GUI never posts analysis data.
+- **Read-Only Analysis Dashboard**: On initial load the GUI calls `GET /api/status` (tecWatch status) and `GET /api/analysis` (the validated analysis report). The GUI never posts analysis data.
+- **🚦 Operator Status Bar**: Shown on every page, built for the DB trial operator: overall tecWatch state, SCI-TDS/RaSTA link (baseline, BTP version check), object controller and heartbeat, GFM-A section state (Belegungszustand, Grundstellbarkeit, since when), test unit state with verdict counts, and active alerts.
+- **🔎 Analysis Findings Page** (`/findings`, button next to the status bar): Everything from the data-analysis workbook via `GET /api/analysis/scenarios`:
+  - Test run overview (verdict, SUT, test system, data sources, time correlation) and findings per severity (click to filter).
+  - Findings explorer: search and filter by severity, test case, data source and category; detail view with symptom, evidence, root cause, potential reasons, recommendation, method and linked timeline events.
+  - Test case verdicts with time windows, failure points, root causes and linked findings.
+  - Correlated multi-source timeline (pcapng, PDF report, BLF) with filters and highlighting of a finding's events.
+  - GFM-A state chart: test-case windows, Belegungszustand, Grundstellbarkeit and AZG/AZGH commands over the run, plus the state table.
+  - Data-source coverage matrix (which sources each finding correlates) and the reproducible analysis method.
+  - The workbook's open questions (team-internal) are delivered by the API but hidden in the GUI; they are commented out in `findings.component.html`.
 - **🧪 Test-Case Navigator**: Lists every test case of the report with its verdict (`PASSED`, `FAILED`, `INCONCLUSIVE`) and message/finding/check counts, plus a trace-wide group for start-up telegrams and global checks. Selecting one scopes all three views.
 - **📡 Trace-Data View**: Visualizes timestamp, message ID, sender → receiver, message type, code, protocol, length, status (`OK`, `FAILED`, `WARNING`) and highlighted error reasons. Click a message for the detailed view with decoded telegram fields and related findings.
 - **🚨 Failure-Analysis View**: Card-based root-cause findings with category, confidence, diagnostic description and evidence sources. Length findings show the expected vs. actual comparison:
@@ -43,16 +52,20 @@ DBLTAS_GUI/
 │   │   ├── app.ts                    # Root component definition
 │   │   ├── app.html                  # Root template (<router-outlet>)
 │   │   ├── components/
-│   │   │   └── dashboard/            # Interactive Trace Analysis Dashboard
-│   │   │       ├── dashboard.component.ts
-│   │   │       ├── dashboard.component.html
-│   │   │       └── dashboard.component.css
+│   │   │   ├── status-header/        # Brand, navigation and tecWatch operator status bar (GET /api/status)
+│   │   │   ├── dashboard/            # Interactive Trace Analysis Dashboard (GET /api/analysis)
+│   │   │   │   ├── dashboard.component.ts
+│   │   │   │   ├── dashboard.component.html
+│   │   │   │   └── dashboard.component.css
+│   │   │   ├── findings/             # Analysis Findings page (GET /api/analysis/scenarios)
+│   │   │   └── loading/              # Global API loading overlay
 │   │   ├── models/
-│   │   │   └── trace-analysis.ts     # TypeScript interfaces of the analysis report (TraceMessage, FailureFinding, DataComparison)
+│   │   │   ├── trace-analysis.ts     # Analysis report and tecWatch status interfaces
+│   │   │   └── analysis-scenarios.ts # Analysis scenarios (findings) interfaces
 │   │   ├── pipes/
 │   │   │   └── filter-status.pipe.ts # Status count & filter pipe (test cases, messages)
 │   │   └── services/
-│   │       └── tecwatch-api.service.ts # HTTP service calling backend API (GET /api/status, GET /api/analysis)
+│   │       └── tecwatch-api.service.ts # HTTP service calling backend API (GET /api/status, /api/analysis, /api/analysis/scenarios)
 │   ├── styles.css                    # Dark-mode design system with glassmorphism tokens
 │   └── index.html                    # HTML shell loading Google Fonts (Outfit & JetBrains Mono)
 ├── angular.json
@@ -92,7 +105,8 @@ Open your browser and navigate to:
 The data shown comes from the analysis report file configured in the backend (`analysis.report_path`, default `backend/data/data-analysis-report.json`). The backend reads it on every request, so:
 1. **New report**: Replace the report file and reload the page — the GUI shows the new analysis.
 2. **Invalid report**: Break the report (e.g. set a `length` to `"47"` or add an unknown field) and reload — the GUI lists the backend's validation errors.
-3. **tecWatch offline**: Stop the tecWatch (mock) server and reload — the status widget shows the gateway error while the analysis stays available.
+3. **tecWatch offline**: Stop the tecWatch (mock) server and reload — the status bar shows the gateway error while the analysis stays available.
+4. **Analysis findings**: Click **🔎 Analysis Findings** next to the status bar, filter by severity (e.g. *High*), open a finding, use *Show on correlated timeline*, and inspect the GFM-A state chart. The findings come from `backend/data/analysis-scenarios.json`, generated from the analysis workbook with `backend/scripts/extract_analysis_scenarios.py`.
 
 Unit tests: `npx ng test --watch=false`
 

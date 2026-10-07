@@ -1,10 +1,43 @@
+/** SCI-TDS interface between ESTW-ZE and the object controller, observed by tecWatch. */
+export interface LinkStatus {
+  state: 'CONNECTED' | 'CONNECTING' | 'DISCONNECTED';
+  protocol: string;
+  btp_version: string;
+  version_check: string;
+  local_endpoint: string;
+  remote_endpoint: string;
+  heartbeat_interval_ms: number;
+  last_message_at: string;
+}
+
+/** GFM-A track section (Belegungszustand, Grundstellbarkeit). */
+export interface TrackSectionStatus {
+  section: string;
+  section_type: string;
+  occupancy: 'FREE' | 'OCCUPIED' | 'DISTURBED';
+  resettable: boolean;
+  axle_count: number;
+  since: string;
+}
+
+export interface TestExecutionStatus {
+  state: 'IDLE' | 'RUNNING' | 'STOPPED' | 'COMPLETED';
+  test_unit: string;
+  configuration: string;
+  current_test_case: string | null;
+  passed: number;
+  failed: number;
+  inconclusive: number;
+}
+
+/** Status returned by GET /api/status (proxied from tecWatch). */
 export interface TecWatchStatus {
   device_id: string;
-  status: string;
-  battery_level: number;
-  uptime_seconds: number;
-  temperature: number;
+  status: 'OPERATIONAL' | 'DEGRADED' | 'DISCONNECTED' | 'FAULT';
   timestamp: string;
+  link: LinkStatus;
+  track_sections: TrackSectionStatus[];
+  test_execution: TestExecutionStatus;
   active_alerts: string[];
 }
 
