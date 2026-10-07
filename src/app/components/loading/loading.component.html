@@ -17,8 +17,13 @@
       </div>
 
       <div class="loading-text-group">
-        <h3 class="loading-title">API Communication in Progress</h3>
-        <p class="loading-subtitle">Querying tecWatch Gateway & synchronizing trace buffers...</p>
+        @if (isUpload(loadingService.currentEndpoint$ | async)) {
+          <h3 class="loading-title">Analysing Uploaded Files</h3>
+          <p class="loading-subtitle">Decoding the capture and reading the test report – this can take a few seconds...</p>
+        } @else {
+          <h3 class="loading-title">API Communication in Progress</h3>
+          <p class="loading-subtitle">Querying tecWatch Gateway & synchronizing trace buffers...</p>
+        }
       </div>
 
       <!-- Active Endpoint Badge -->

@@ -9,4 +9,8 @@ import { LoadingService } from '../../services/loading.service';
 })
 export class LoadingComponent {
   constructor(public loadingService: LoadingService) {}
+
+  isUpload(endpoint: string | null): boolean {
+    return !!endpoint && endpoint.includes('/analysis/upload');
+  }
 }

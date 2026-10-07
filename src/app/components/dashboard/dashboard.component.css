@@ -49,20 +49,24 @@
 }
 
 .sort-btn {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   color: var(--text-muted);
   padding: 4px 8px;
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.75rem;
-  transition: all 0.2s;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.sort-btn:hover {
+  background: var(--bg-hover);
 }
 
 .sort-btn.active {
-  background: rgba(99, 102, 241, 0.2);
+  background: var(--accent-soft);
   border-color: var(--accent-primary);
-  color: #fff;
+  color: var(--text-main);
 }
 
 /* Analysis List Items */
@@ -77,34 +81,32 @@
 
 .analysis-item {
   padding: 14px;
-  background: rgba(15, 23, 42, 0.6);
+  background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.15s ease, border-color 0.15s ease;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
 .analysis-item:hover {
-  background: rgba(30, 41, 59, 0.8);
-  border-color: rgba(255, 255, 255, 0.15);
-  transform: translateX(2px);
+  background: var(--bg-inset);
+  border-color: var(--border-strong);
 }
 
 .analysis-item.selected {
-  background: rgba(99, 102, 241, 0.15);
+  background: color-mix(in srgb, var(--accent-soft) 60%, var(--bg-surface));
   border-color: var(--accent-primary);
-  box-shadow: 0 0 12px rgba(99, 102, 241, 0.2);
 }
 
 .analysis-item.has-error {
-  border-left: 3px solid var(--accent-rose);
+  border-left: 4px solid var(--status-critical);
 }
 
 .analysis-item.has-warning {
-  border-left: 3px solid var(--accent-amber);
+  border-left: 4px solid var(--status-warning);
 }
 
 .item-top {
@@ -176,16 +178,17 @@
 
 .error-highlight {
   display: inline-block;
-  color: var(--accent-rose);
+  color: var(--text-main);
   font-weight: 600;
-  background: rgba(244, 63, 94, 0.15);
+  background: color-mix(in srgb, var(--status-critical) 10%, var(--bg-surface));
+  border-left: 3px solid var(--status-critical);
   padding: 3px 8px;
   border-radius: 4px;
 }
 
 .error-highlight.warning-highlight {
-  color: var(--accent-amber);
-  background: var(--accent-amber-bg);
+  background: color-mix(in srgb, var(--status-warning) 16%, var(--bg-surface));
+  border-left-color: var(--status-warning);
 }
 
 .trace-table th,
@@ -200,11 +203,11 @@
 }
 
 .data-table tr.message-row.expanded td {
-  background: rgba(99, 102, 241, 0.12);
+  background: color-mix(in srgb, var(--accent-soft) 70%, var(--bg-surface));
 }
 
 .data-table tr.message-detail-row td {
-  background: rgba(15, 23, 42, 0.9);
+  background: var(--bg-inset);
   padding: 14px 16px 16px;
 }
 
@@ -229,8 +232,8 @@
 }
 
 .field-chip {
-  background: rgba(6, 182, 212, 0.1);
-  border: 1px solid rgba(6, 182, 212, 0.25);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
   padding: 3px 8px;
   border-radius: 6px;
   font-size: 0.78rem;
@@ -253,7 +256,7 @@
 
 .failure-card {
   padding: 18px;
-  border-left: 4px solid var(--accent-rose);
+  border-left: 4px solid var(--status-critical);
 }
 
 .failure-card-header {
@@ -277,8 +280,8 @@
 
 /* Exact Diff Box from Requirements */
 .length-diff-box {
-  background: rgba(15, 23, 42, 0.9);
-  border: 1px solid rgba(244, 63, 94, 0.25);
+  background: var(--bg-inset);
+  border: 1px solid color-mix(in srgb, var(--status-critical) 35%, var(--bg-surface));
   border-radius: 8px;
   padding: 14px;
   display: flex;
@@ -294,23 +297,23 @@
 }
 
 .diff-label {
-  color: var(--text-dim);
+  color: var(--text-muted);
 }
 
 .diff-val.expected {
-  color: var(--accent-cyan);
+  color: var(--accent-primary);
   font-weight: 600;
 }
 
 .diff-val.actual-error {
-  color: var(--accent-rose);
+  color: var(--text-critical);
   font-weight: 700;
 }
 
 .diff-result {
   display: flex;
   justify-content: space-between;
-  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--border-subtle);
   padding-top: 8px;
   font-weight: 600;
 }
@@ -333,7 +336,7 @@
   margin-top: 10px;
   padding-left: 18px;
   font-size: 0.72rem;
-  color: var(--text-dim);
+  color: var(--text-muted);
 }
 
 .failure-time {
@@ -343,21 +346,21 @@
 
 /* Comparison Table Cells */
 .comparison-table .expected-cell {
-  color: var(--accent-cyan);
+  color: var(--accent-primary);
   font-weight: 600;
 }
 
 .comparison-table .actual-ok {
-  color: var(--accent-emerald);
+  color: var(--text-good);
 }
 
 .comparison-table .actual-error-cell {
-  color: var(--accent-rose);
+  color: var(--text-critical);
   font-weight: 700;
 }
 
 .comparison-table .actual-warning-cell {
-  color: var(--accent-amber);
+  color: var(--text-warning);
   font-weight: 700;
 }
 

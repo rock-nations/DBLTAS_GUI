@@ -23,13 +23,12 @@
 .brand-icon {
   width: 44px;
   height: 44px;
-  background: linear-gradient(135deg, #6366f1 0%, #06b6d4 100%);
+  background: linear-gradient(135deg, var(--accent-primary) 0%, #104281 100%);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
 }
 
 .brand-title {
@@ -39,15 +38,15 @@
 
 .brand-sub {
   font-size: 0.85rem;
-  color: var(--text-dim);
+  color: var(--text-muted);
 }
 
 /* View Navigation */
 .view-nav {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   padding: 4px;
-  background: rgba(15, 23, 42, 0.8);
+  background: var(--bg-inset);
   border: 1px solid var(--border-subtle);
   border-radius: 12px;
 }
@@ -62,18 +61,31 @@
   font-weight: 600;
   color: var(--text-muted);
   text-decoration: none;
-  transition: all 0.2s ease;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 .nav-btn:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-main);
+  background: var(--bg-hover);
 }
 
 .nav-btn.active {
-  color: #fff;
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+  color: #ffffff;
+  background: var(--accent-primary);
+}
+
+/* The upload action stands out from the two views */
+.nav-upload {
+  border: 1px solid var(--accent-primary);
+}
+
+.nav-upload:not(.active) {
+  color: var(--accent-primary-hover);
+  background: var(--bg-surface);
+}
+
+.nav-upload:not(.active):hover {
+  background: var(--accent-soft);
 }
 
 /* tecWatch Status Bar */
@@ -90,7 +102,7 @@
   flex-direction: column;
   gap: 3px;
   padding: 10px 14px;
-  background: rgba(15, 23, 42, 0.75);
+  background: var(--bg-inset);
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
 }
@@ -100,7 +112,7 @@
 }
 
 .track-section.is-disturbed {
-  border-left: 3px solid var(--accent-rose);
+  border-left: 3px solid var(--status-critical);
 }
 
 .status-label {
@@ -131,8 +143,8 @@
   align-items: center;
   gap: 10px;
   padding: 10px 14px;
-  background: rgba(244, 63, 94, 0.08);
-  border: 1px solid rgba(244, 63, 94, 0.3);
+  background: color-mix(in srgb, var(--status-critical) 7%, var(--bg-surface));
+  border: 1px solid color-mix(in srgb, var(--status-critical) 40%, var(--bg-surface));
   border-radius: 10px;
 }
 
@@ -147,9 +159,10 @@
 .alert-list li {
   padding: 8px 12px;
   border-radius: 8px;
-  background: var(--accent-amber-bg);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  color: var(--accent-amber);
+  background: color-mix(in srgb, var(--status-warning) 14%, var(--bg-surface));
+  border: 1px solid color-mix(in srgb, var(--status-warning) 55%, var(--bg-surface));
+  border-left: 4px solid var(--status-warning);
+  color: var(--text-main);
   font-size: 0.825rem;
   font-weight: 600;
 }

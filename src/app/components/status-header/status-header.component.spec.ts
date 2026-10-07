@@ -92,12 +92,14 @@ describe('StatusHeaderComponent', () => {
     expect(text).not.toContain('Battery');
   });
 
-  it('should offer navigation to the trace analysis and the analysis findings', async () => {
+  it('should offer navigation to the trace analysis, the analysis findings and the upload', async () => {
     await setup();
 
     expect(compiled.querySelector('#nav-dashboard')?.getAttribute('href')).toBe('/');
     expect(compiled.querySelector('#nav-findings')?.getAttribute('href')).toBe('/findings');
     expect(compiled.querySelector('#nav-findings')?.textContent).toContain('Analysis Findings');
+    expect(compiled.querySelector('#nav-upload')?.getAttribute('href')).toBe('/upload');
+    expect(compiled.querySelector('#nav-upload')?.textContent).toContain('Upload & Analyze');
     expect('submitAnalysis' in TecWatchApiService.prototype).toBe(false);
   });
 
