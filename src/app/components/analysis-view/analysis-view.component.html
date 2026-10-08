@@ -6,24 +6,24 @@
 
   <nav class="inspector-tabs" aria-label="Analysis views">
     <button id="tab-summary" class="tab-btn" [class.active]="activeTab === 'summary'" (click)="activeTab = 'summary'">
-      📋 Summary
+      Summary
     </button>
     <button id="tab-findings" class="tab-btn" [class.active]="activeTab === 'findings'" (click)="activeTab = 'findings'">
-      🔎 Findings ({{ data.scenarios.length }})
+      Findings ({{ data.scenarios.length }})
     </button>
     @if (data.timeline.length > 0) {
       <button id="tab-timeline" class="tab-btn" [class.active]="activeTab === 'timeline'" (click)="activeTab = 'timeline'">
-        🕒 Timeline ({{ data.timeline.length }})
+        Timeline ({{ data.timeline.length }})
       </button>
     }
     @if (data.gfma_state_history.states.length > 0) {
       <button id="tab-states" class="tab-btn" [class.active]="activeTab === 'states'" (click)="activeTab = 'states'">
-        🚦 GFM-A {{ data.gfma_state_history.section }}
+        GFM-A {{ data.gfma_state_history.section }}
       </button>
     }
     @if (data.io_graph) {
       <button id="tab-traffic" class="tab-btn" [class.active]="activeTab === 'traffic'" (click)="activeTab = 'traffic'">
-        📈 I/O Graph
+        I/O Graph
       </button>
     }
   </nav>

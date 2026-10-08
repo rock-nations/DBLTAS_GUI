@@ -89,28 +89,30 @@ export interface OpenQuestion {
   scenario_ids: string[];
 }
 
-/** Packets one IP address sent (ip.src) and received (ip.dst) per interval. */
+/** IP address of the capture with the number of packets it sent (ip.src) and received (ip.dst). */
 export interface IoGraphHost {
   address: string;
   role: string | null;
   packets_sent: number;
   packets_received: number;
-  sent: number[];
-  received: number[];
 }
 
-/** Packets per interval over an uploaded capture, like the Wireshark I/O graph. */
+/** Time and IP addresses of every packet of an uploaded capture, for the Wireshark-like I/O graph. */
 export interface IoGraph {
   capture_file: string;
   /** Time of the first packet (Unix time, UTC). */
   start_epoch_s: number;
-  interval_s: number;
+  duration_s: number;
   /** UTC offset of the test bench from the test report; null if unknown. */
   utc_offset_min: number | null;
   /** Unix time of CANoe measurement time 0; null if the capture cannot be aligned. */
   canoe_zero_epoch_s: number | null;
   total_packets: number;
-  all_packets: number[];
+  /** Time of every packet after the first one [µs], in time order. */
+  packet_time_us: number[];
+  /** Index in hosts of each packet's source / destination address (-1: not IP or not listed). */
+  packet_src: number[];
+  packet_dst: number[];
   /** Addresses with fewer packets that are not listed in hosts. */
   other_hosts: number;
   hosts: IoGraphHost[];

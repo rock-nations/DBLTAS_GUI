@@ -9,9 +9,9 @@
     </div>
     <div class="io-controls">
       <label class="control-label" for="io-interval">Interval</label>
-      <select id="io-interval" class="form-select" [ngModel]="aggregation" (ngModelChange)="setAggregation($event)">
-        @for (multiple of aggregationOptions; track multiple) {
-          <option [ngValue]="multiple">{{ intervalLabel(multiple) }}</option>
+      <select id="io-interval" class="form-select" [ngModel]="interval" (ngModelChange)="chooseInterval($event)">
+        @for (option of intervalOptions; track option) {
+          <option [ngValue]="option">{{ intervalLabel(option) }}</option>
         }
       </select>
       @if (zoomed) {
@@ -21,7 +21,6 @@
   </header>
 
   <div class="chart">
-    <span class="y-unit">Packets / {{ intervalLabel(aggregation) }}</span>
     <div class="chart-grid">
       @if (tcSegments.length > 0) {
         <span class="strip-label">Test cases</span>
@@ -40,16 +39,20 @@
         </div>
       }
 
+      <div class="y-label">
+        <span id="io-y-label">Packets / {{ intervalLabel(interval) }}</span>
+      </div>
       <div class="y-axis" aria-hidden="true">
         @for (tick of yTicks; track tick.label) {
           <span class="y-tick" [style.bottom.%]="tick.position">{{ tick.label }}</span>
         }
       </div>
       <div
+        #plot
         id="io-plot"
         class="plot"
         role="img"
-        [attr.aria-label]="'Packets per ' + intervalLabel(aggregation) + ' over the capture; values are listed in the table below'"
+        [attr.aria-label]="'Packets per ' + intervalLabel(interval) + ' over the capture; totals are listed in the table below'"
         (mousedown)="onPointerDown($event)"
         (mousemove)="onPointerMove($event)"
         (mouseup)="onPointerUp($event)"
@@ -66,6 +69,11 @@
               [attr.y2]="plotHeight - tick.position / 100 * plotHeight"
               vector-effect="non-scaling-stroke"
             />
+          }
+          @for (line of lines; track line.key) {
+            @if (line.band) {
+              <polygon [attr.class]="'series-band ' + line.cssClass" [attr.points]="line.band" />
+            }
           }
           @for (line of lines; track line.key) {
             <polyline [attr.class]="'series-line ' + line.cssClass" [attr.points]="line.points" vector-effect="non-scaling-stroke" />
@@ -94,10 +102,10 @@
         }
       </div>
 
-      <span></span>
+      <span class="x-spacer"></span>
       <div class="x-axis" aria-hidden="true">
         @for (tick of xTicks; track $index) {
-          <span class="x-tick" [class.edge-start]="tick.position < 6" [class.edge-end]="tick.position > 94" [style.left.%]="tick.position">
+          <span class="x-tick" [style.left.%]="tick.position">
             <span class="mono">{{ tick.label }}</span>
             @if (tick.sub) {
               <span class="x-date">{{ tick.sub }}</span>
