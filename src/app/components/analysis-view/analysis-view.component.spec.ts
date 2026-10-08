@@ -86,7 +86,7 @@ describe('AnalysisViewComponent', () => {
     await setup();
 
     const tabs = Array.from(compiled.querySelectorAll('.tab-btn')).map(tab => tab.textContent?.trim());
-    expect(tabs).toEqual(['📋 Summary', '🔎 Findings (4)', '🕒 Timeline (7)', '🚦 GFM-A 34W1']);
+    expect(tabs).toEqual(['Summary', 'Findings (4)', 'Timeline (7)', 'GFM-A 34W1']);
     expect(compiled.querySelector('.severity-grid')).toBeNull();
     expect(compiled.textContent).not.toContain('Data sources');
     expect(compiled.textContent).not.toContain('PDF test report, pcapng, BLF');
